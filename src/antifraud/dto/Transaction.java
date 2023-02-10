@@ -25,6 +25,8 @@ import javax.validation.constraints.Positive;
 //        nested exception is com.fasterxml.jackson.databind.exc.MismatchedInputException: Cannot construct instance of `antifraud.dto.Transaction` (although at least one Creator exists): cannot deserialize from Object value (no delegate- or property-based Creator) at [Source: (PushbackInputStream); line: 2, column: 5]]
 // to resolve it, I had to add the no argument constructor (and force final field initialization) - the reason is the finding above
 
+// constructor properties: https://stackoverflow.com/questions/26703645/dont-understand-constructorproperties
+
 // NOTE1: of course this is far from ideal - we should not provide a no args constructor for fields, which cannot be modified by user - ending up with a "default-initialized object"
 // NOTE2: this is a DTO, I strongly believe that we should not be adding validations
 
