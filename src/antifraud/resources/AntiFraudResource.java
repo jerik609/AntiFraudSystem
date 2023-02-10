@@ -4,10 +4,11 @@ import antifraud.dto.Result;
 import antifraud.dto.Transaction;
 import antifraud.service.AntiFraudService;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -36,6 +37,10 @@ public class AntiFraudResource {
 //            return new ResponseEntity<>(new Result("Error: " + e + " while processing request: " + request), HttpStatus.BAD_REQUEST);
 //        }
 
+        @Override
+        public ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
+            return new ResponseEntity<>(new Result("Exception: " + ex), HttpStatus.I_AM_A_TEAPOT);
+        }
 
 
 

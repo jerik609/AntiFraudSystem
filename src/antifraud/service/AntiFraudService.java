@@ -2,7 +2,6 @@ package antifraud.service;
 
 import antifraud.dto.Transaction;
 import antifraud.enumeration.VerificationResult;
-import antifraud.exception.InvalidTransactionAmountException;
 import org.springframework.stereotype.Service;
 
 @Service
