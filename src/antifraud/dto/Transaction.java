@@ -1,35 +1,34 @@
 package antifraud.dto;
 
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Positive;
 
-// https://www.baeldung.com/jackson-deserialize-immutable-objects
-
-// https://www.baeldung.com/javax-validation
-
-// http://www.devnips.com/2021/05/adding-custom-validation-in-lombok.html
-
-// but @Valid and @Builder do not seem to play together nicely ...
-
-// ??? https://www.linkedin.com/pulse/spring-projects-best-practices-episode-i-ekramali-kazi/
-
-// ??? https://www.baeldung.com/exception-handling-for-rest-with-spring
+// https://github.com/projectlombok/lombok/issues/1563#issuecomment-363460962
+/*
+    Details from the issue report:
+    Just that I understand everything, as we are hitting the same bug. The change basically means that lombok is not adding
+    anymore the @ConstructorProperties annotation to the generated constructors. And this one was used by the jackson when
+    there was only an all-args constructor available. And since @Data and @Builder both add only the all-args constructor,
+    the jackson has no way to instantiate the object.
+    Solution one would be setting the property as described above (seems easy, at least for Java 1.8).
+    Second would be to explicitly add @NoArgsConstructor (and unfortunately also @AllArgsConstructor if you are using @Builder)
+    to all classes annotated with @Data or/and @Builder (I confirmed this works as jackson goes for no-arg constructor most likely).
+    Is there any kind of property we can use to generate both types of constructors with @Data or/and @Budiler? Then I would not
+    care about @ConstructorProperties at all. Or I am wrong here somehow?
+ */
+// making the field private would interfere with validation, producing the error:
+//    o.s.w.s.m.m.a.HttpEntityMethodProcessor  : No match for [*/*], supported: []
+//    .m.m.a.ExceptionHandlerExceptionResolver : Resolved [org.springframework.http.converter.HttpMessageNotReadableException:
+//        JSON parse error: Cannot construct instance of `antifraud.dto.Transaction` (although at least one Creator exists): cannot deserialize from Object value (no delegate- or property-based Creator);
+//        nested exception is com.fasterxml.jackson.databind.exc.MismatchedInputException: Cannot construct instance of `antifraud.dto.Transaction` (although at least one Creator exists): cannot deserialize from Object value (no delegate- or property-based Creator) at [Source: (PushbackInputStream); line: 2, column: 5]]
+// to resolve it, I had to add the no argument constructor (and force final field initialization) - the reason is the finding above
+// of course this is far from ideal - we should not provide a no args constructor for fields, which cannot be modified by user - ending up with a "default-initialized object"
 
 @Data
-//@Builder // provides the builder :-)
-//@JsonDeserialize(builder = Transaction.TransactionBuilder.class) // tells JSON deserialization to use the generated builder
+@NoArgsConstructor(force = true)
 public class Transaction {
     @Positive
-    private long amount;
-
-//    @Positive
-//    private long amount;
-
-
-
+    private final long amount;
 }
-
