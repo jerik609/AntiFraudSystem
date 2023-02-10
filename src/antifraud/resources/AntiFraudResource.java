@@ -39,7 +39,7 @@ public class AntiFraudResource {
 
         @Override
         public ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
-            return new ResponseEntity<>(new Result("Exception: " + ex), HttpStatus.I_AM_A_TEAPOT);
+            return new ResponseEntity<>(new Result("Exception: " + ex), HttpStatus.BAD_REQUEST);
         }
 
 
