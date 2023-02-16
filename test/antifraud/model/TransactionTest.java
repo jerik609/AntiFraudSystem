@@ -1,14 +1,16 @@
 package antifraud.model;
 
 import antifraud.repository.TransactionRepository;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.SpringBootTest;
 
 // https://docs.spring.io/spring-framework/docs/current/reference/html/testing.html#integration-testing-annotations
 
-@SpringBootTest
-//@DataJpaTest
+@Disabled("does not work with hyperskill test setup which runs on java 17")
+@DataJpaTest
 public class TransactionTest {
 
     @Autowired
@@ -21,7 +23,6 @@ public class TransactionTest {
                 .amount(100L)
                 .build();
         transactionRepository.save(transaction);
-
     }
 
 }
