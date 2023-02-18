@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 
 @Data
 @RequiredArgsConstructor
-public class Result {
+public class TransactionEntryResponse {
+
     private final String result;
+
 }

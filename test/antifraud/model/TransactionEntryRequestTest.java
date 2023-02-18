@@ -11,7 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 @Disabled("does not work with hyperskill test setup which runs on java 17")
 @DataJpaTest
-public class TransactionTest {
+public class TransactionEntryRequestTest {
 
     @Autowired
     private TransactionRepository transactionRepository;

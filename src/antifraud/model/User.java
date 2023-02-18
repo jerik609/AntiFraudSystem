@@ -11,6 +11,7 @@ import javax.validation.constraints.NotEmpty;
 @NoArgsConstructor
 @Builder
 @Table(name = "tbl_user")
+@ToString(exclude = {"password"})
 public class User {
 
     @Id

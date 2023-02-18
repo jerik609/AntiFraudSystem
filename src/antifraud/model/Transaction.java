@@ -23,9 +23,7 @@ public class Transaction {
             generator = "transaction_sequence"
     )
     private Long id;
-
     private Long amount;
-
     private String owner;
 
 }

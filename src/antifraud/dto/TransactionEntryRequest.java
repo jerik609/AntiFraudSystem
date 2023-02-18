@@ -32,7 +32,9 @@ import javax.validation.constraints.Positive;
 
 @Data
 @NoArgsConstructor(force = true)
-public class Transaction {
+public class TransactionEntryRequest {
+
     @Positive
     private final long amount;
+
 }
