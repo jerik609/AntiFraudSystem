@@ -62,10 +62,9 @@ public class UserResource {
 
     @DeleteMapping(value = "/user/{username}")
     public ResponseEntity<UserOperationResponse> deleteUser(@PathVariable String username) {
+        log.info("Deleting user: " + username);
         userService.deleteUser(username);
         return new ResponseEntity<>(new UserOperationResponse(username, "Deleted successfully!"), HttpStatus.OK);
-
-
     }
 
 }

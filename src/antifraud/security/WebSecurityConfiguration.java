@@ -31,6 +31,7 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .mvcMatchers(HttpMethod.POST, "api/antifraud/transaction").authenticated()
                 // all the rest
                 .mvcMatchers("/**").authenticated();
+        // https://www.baeldung.com/spring-security-basic-authentication
         httpSecurity.httpBasic()
                 .authenticationEntryPoint(authenticationEntryPoint);
         httpSecurity.sessionManagement()
