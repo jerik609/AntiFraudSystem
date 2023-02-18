@@ -4,8 +4,10 @@ import antifraud.model.User;
 import antifraud.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.transaction.Transactional;
 import java.util.List;
@@ -33,6 +35,7 @@ public class UserService {
 
     @Transactional
     public void deleteUser(String username) {
+        userRepository.findByUsername(username).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User with username " + username + " not found"));
         userRepository.deleteByUsername(username);
     }
 
