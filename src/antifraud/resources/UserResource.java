@@ -7,9 +7,11 @@ import antifraud.model.User;
 import antifraud.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -28,12 +30,17 @@ public class UserResource {
 
         log.info("Processing user entry request: " + userEntryRequest);
 
-        final var user = userService.enterUser(
-                User.builder()
-                        .name(userEntryRequest.getName())
-                        .username(userEntryRequest.getUsername().toLowerCase())
-                        .password(userEntryRequest.getPassword())
-                        .build());
+        User user;
+        try {
+            user = userService.enterUser(
+                    User.builder()
+                            .name(userEntryRequest.getName())
+                            .username(userEntryRequest.getUsername().toLowerCase())
+                            .password(userEntryRequest.getPassword())
+                            .build());
+        } catch (DataIntegrityViolationException exception) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "User with name " + userEntryRequest.getName() + " already exists.");
+        }
 
         log.info("Created user: " + user);
 

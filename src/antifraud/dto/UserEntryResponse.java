@@ -1,12 +1,11 @@
 package antifraud.dto;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 @Data
 @Builder
-@RequiredArgsConstructor
+@RequiredArgsConstructor // because of builder
+@NoArgsConstructor(force = true)
 public class UserEntryResponse {
 
     private final Long id;
