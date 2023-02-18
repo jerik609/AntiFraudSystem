@@ -2,6 +2,7 @@ package antifraud.resources;
 
 import antifraud.dto.UserEntryRequest;
 import antifraud.dto.UserEntryResponse;
+import antifraud.dto.UserOperationResponse;
 import antifraud.model.User;
 import antifraud.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/api/auth")
@@ -20,22 +23,19 @@ public class UserResource {
 
     private final UserService userService;
 
-    @GetMapping(name = "/user")
-    public String getUser() {
-        return "hello, user!";
-    }
-
     @PostMapping(value = "/user")
     public ResponseEntity<UserEntryResponse> enterUser(@RequestBody @Valid UserEntryRequest userEntryRequest) {
-        final var user = User.builder()
-                .name(userEntryRequest.getName())
-                .username(userEntryRequest.getUsername().toLowerCase())
-                .password(userEntryRequest.getPassword())
-                .build();
 
-        log.info("Creating user: " + user);
+        log.info("Processing user entry request: " + userEntryRequest);
 
-        final var id = userService.enterUser(user);
+        final var user = userService.enterUser(
+                User.builder()
+                        .name(userEntryRequest.getName())
+                        .username(userEntryRequest.getUsername().toLowerCase())
+                        .password(userEntryRequest.getPassword())
+                        .build());
+
+        log.info("Created user: " + user);
 
         return new ResponseEntity<>(
                 UserEntryResponse.builder()
@@ -43,7 +43,29 @@ public class UserResource {
                         .name(user.getName())
                         .username(user.getUsername())
                         .build(),
-                HttpStatus.OK);
+                HttpStatus.CREATED);
+    }
+
+    @GetMapping(value = "/list")
+    public ResponseEntity<List<UserEntryResponse>> getUserList() {
+
+        final var users = userService.getUsers();
+
+        return new ResponseEntity<>(users.stream().map(user ->
+                UserEntryResponse.builder()
+                        .id(user.getId())
+                        .name(user.getName())
+                        .username(user.getUsername())
+                        .build()
+        ).collect(Collectors.toList()), HttpStatus.OK);
+    }
+
+    @DeleteMapping(value = "/user/{username}")
+    public ResponseEntity<UserOperationResponse> deleteUser(@PathVariable String username) {
+        userService.deleteUser(username);
+        return new ResponseEntity<>(new UserOperationResponse(username, "Deleted successfully!"), HttpStatus.OK);
+
+
     }
 
 }

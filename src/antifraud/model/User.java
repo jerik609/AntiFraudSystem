@@ -1,6 +1,7 @@
 package antifraud.model;
 
 import lombok.*;
+import org.hibernate.validator.constraints.UniqueElements;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
@@ -28,6 +29,10 @@ public class User {
     @NotEmpty
     private String name;
     @NotEmpty
+    @Column(
+            nullable = false,
+            unique = true
+    )
     private String username;
     @NotEmpty
     private String password;

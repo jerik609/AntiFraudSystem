@@ -19,10 +19,17 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeRequests()
+                // actuator
                 .mvcMatchers("/actuator/**").permitAll()
+                // database console
                 .mvcMatchers("/h2/**").permitAll()
+                // user authentication/authorization settings
                 .mvcMatchers(HttpMethod.POST, "/api/auth/user").permitAll()
-                .mvcMatchers(HttpMethod.GET).permitAll()
+                .mvcMatchers(HttpMethod.GET, "api/auth/list").authenticated()
+                .mvcMatchers(HttpMethod.DELETE, "api/auth/delete").authenticated()
+                // transaction entry api
+                .mvcMatchers(HttpMethod.POST, "api/antifraud/transaction").authenticated()
+                // all the rest
                 .mvcMatchers("/**").authenticated();
         httpSecurity.httpBasic()
                 .authenticationEntryPoint(authenticationEntryPoint);
