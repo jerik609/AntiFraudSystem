@@ -16,7 +16,7 @@ public class Transaction {
     @SequenceGenerator(
             name = "transaction_sequence",
             sequenceName = "transaction_sequence",
-            allocationSize = 5
+            allocationSize = 1
     )
     @GeneratedValue(
             strategy = GenerationType.SEQUENCE,
