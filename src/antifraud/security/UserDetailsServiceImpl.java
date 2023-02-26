@@ -2,12 +2,15 @@ package antifraud.security;
 
 import antifraud.service.UserService;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+
+import java.util.stream.Collectors;
 
 @Configuration
 public class UserDetailsServiceImpl implements UserDetailsService {
@@ -20,16 +23,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-
-        final var user = userService.getUserByUsername(username).orElseThrow(() ->
-                new UsernameNotFoundException("User with username " + username + " does not exist"));
-
-        return UserDetailsImpl.builder()
-                .username(user.getUsername())
-                .password(user.getPassword())
-//                .active(user.isActive())
-//                .roles(user.getRoles())
-                .build();
+        return userService.getUserDetails(username);
     }
 
 }

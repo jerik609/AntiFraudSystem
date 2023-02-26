@@ -41,7 +41,8 @@ public class User {
     @NotEmpty
     private String password;
 
-    private boolean active = false;
+    @Builder.Default
+    private boolean enabled = false;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(

@@ -5,10 +5,14 @@ import antifraud.model.Role;
 import antifraud.model.User;
 import antifraud.repository.RoleRepository;
 import antifraud.repository.UserRepository;
+import antifraud.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -17,6 +21,7 @@ import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -44,16 +49,14 @@ public class UserService {
         final var adminUsers = userRepository.findFirstByUserRolesContaining(adminRole);
         if (adminUsers.isEmpty()) {
             log.info("No administrator account exists, will create administrator from: {}", user);
-            //final var role = roleRepository.findByRoleType(RoleType.ADMINISTRATOR).orElse(Role.builder().roleType(RoleType.ADMINISTRATOR).build());
             user.setUserRoles(Set.of(adminRole));
-            user.setActive(true);
+            user.setEnabled(true);
         } else {
             log.info("Administrator account already exists, will create merchant from: {}", user);
             final var role = roleRepository
                     .findByRoleType(RoleType.MERCHANT)
                     .orElse(Role.builder().roleType(RoleType.MERCHANT).build());
             user.setUserRoles(Set.of(role));
-            user.setActive(false);
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -78,4 +81,21 @@ public class UserService {
         userRepository.deleteByUsername(username);
     }
 
+    @Transactional
+    public UserDetails getUserDetails(String username) {
+
+        final var user = getUserByUsername(username).orElseThrow(() ->
+                new UsernameNotFoundException("User with username " + username + " does not exist"));
+
+        final var grantedAuthorities = user.getUserRoles().stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleType().name()))
+                .collect(Collectors.toList());
+
+        return UserDetailsImpl.builder()
+                .authorities(grantedAuthorities)
+                .username(user.getUsername())
+                .password(user.getPassword())
+                .enabled(user.isEnabled())
+                .build();
+    }
 }

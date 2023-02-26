@@ -12,9 +12,10 @@ import java.util.List;
 @Builder
 public class UserDetailsImpl implements UserDetails {
 
-    private final List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+    private final List<SimpleGrantedAuthority> authorities;
     private final String username;
     private final String password;
+    private final boolean enabled;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -38,7 +39,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return this.enabled;
     }
 
     @Override
@@ -48,7 +49,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return this.enabled;
     }
 
 }

@@ -25,6 +25,11 @@ public class UserResource {
 
     private final UserService userService;
 
+    @GetMapping(value = "/hello")
+    public String hello() {
+        return "Hello there!";
+    }
+
     @PostMapping(value = "/user")
     public ResponseEntity<UserEntryResponse> enterUser(@RequestBody @Valid UserEntryRequest userEntryRequest) {
 
