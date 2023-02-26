@@ -25,11 +25,6 @@ public class UserResource {
 
     private final UserService userService;
 
-    @GetMapping(value = "/hello")
-    public String hello() {
-        return "Hello there!";
-    }
-
     @PostMapping(value = "/user")
     public ResponseEntity<UserEntryResponse> enterUser(@RequestBody @Valid UserEntryRequest userEntryRequest) {
 
@@ -58,6 +53,10 @@ public class UserResource {
                         .id(user.getId())
                         .name(user.getName())
                         .username(user.getUsername())
+                        .role(user.getUserRoles().stream()
+                                .findFirst().orElseThrow(() -> new RuntimeException("No role for user: " + user))
+                                .getRoleType()
+                                .name())
                         .build(),
                 HttpStatus.CREATED);
     }
@@ -72,6 +71,10 @@ public class UserResource {
                         .id(user.getId())
                         .name(user.getName())
                         .username(user.getUsername())
+                        .role(user.getUserRoles().stream()
+                                .findFirst().orElseThrow(() -> new RuntimeException("No role for user: " + user))
+                                .getRoleType()
+                                .name())
                         .build()
         ).collect(Collectors.toList()), HttpStatus.OK);
     }
