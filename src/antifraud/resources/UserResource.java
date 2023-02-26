@@ -30,6 +30,10 @@ public class UserResource {
 
         log.info("Processing user entry request: " + userEntryRequest);
 
+        // trying to enter a user
+        // if no admin exists - this user will be the admin
+        // if admin exists, then this user will be a merchant
+
         User user;
         try {
             user = userService.enterUser(

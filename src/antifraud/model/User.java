@@ -1,10 +1,14 @@
 package antifraud.model;
 
+import antifraud.enums.RoleType;
 import lombok.*;
 import org.hibernate.validator.constraints.UniqueElements;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Data
@@ -36,5 +40,14 @@ public class User {
     private String username;
     @NotEmpty
     private String password;
+
+    private boolean active = false;
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+            name = "tbl_user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<Role> roles = new HashSet<>();
 
 }

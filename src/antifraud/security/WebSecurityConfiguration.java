@@ -2,6 +2,7 @@ package antifraud.security;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -16,6 +17,9 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
         this.authenticationEntryPoint = authenticationEntryPoint;
     }
 
+    // can I change spring security configuration (namely HttpSecurity) during runtime?
+    // https://stackoverflow.com/questions/39089494/modify-spring-security-config-at-runtime
+
     @Override
     public void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeRequests()
@@ -23,14 +27,16 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .mvcMatchers("/actuator/**").permitAll()
                 // database console
                 .mvcMatchers("/h2/**").permitAll()
-                // user authentication/authorization settings
+                // secure the authentication/authorization api
                 .mvcMatchers(HttpMethod.POST, "/api/auth/user").permitAll()
-                .mvcMatchers(HttpMethod.GET, "api/auth/list").authenticated()
-                .mvcMatchers(HttpMethod.DELETE, "api/auth/delete").authenticated()
-                // transaction entry api
-                .mvcMatchers(HttpMethod.POST, "api/antifraud/transaction").authenticated()
-                // all the rest
-                .mvcMatchers("/**").authenticated();
+                .mvcMatchers(HttpMethod.DELETE, "/api/auth/user").hasAnyRole("ADMINISTRATOR")
+                .mvcMatchers(HttpMethod.GET, "/api/auth/list").hasAnyRole("ADMINISTRATOR")
+                .mvcMatchers(HttpMethod.PUT, "/api/auth/access").hasAnyRole("ADMINISTRATOR")
+                .mvcMatchers(HttpMethod.PUT, "/api/auth/role").hasAnyRole("ADMINISTRATOR")
+                // secure the antifraud api
+                .mvcMatchers(HttpMethod.POST, "/api/antifraud/transaction").hasAnyRole("MERCHANT")
+                // deny all the rest
+                .mvcMatchers("/**").denyAll();
         // https://www.baeldung.com/spring-security-basic-authentication
         httpSecurity.httpBasic()
                 .authenticationEntryPoint(authenticationEntryPoint);
