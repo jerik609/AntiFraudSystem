@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
+// https://javabydeveloper.com/spring-boot-loading-initial-data/
+
 @Entity
 @Data
 @AllArgsConstructor
@@ -18,17 +20,21 @@ public class Role {
 
     @Id
     @SequenceGenerator(
-            name = "role_sequence",
-            sequenceName = "role_sequence",
-            allocationSize = 1
+            name = "user_roles_sequence",
+            sequenceName = "user_roles_sequence",
+            initialValue = 1
     )
     @GeneratedValue(
             strategy = GenerationType.SEQUENCE,
-            generator = "role_sequence"
+            generator = "user_roles_sequence"
     )
     private long id;
 
+    @Column(
+            nullable = false,
+            unique = true
+    )
     @Enumerated(EnumType.STRING)
-    private RoleType role;
+    private RoleType roleType;
 
 }

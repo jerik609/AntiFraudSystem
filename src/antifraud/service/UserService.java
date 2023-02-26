@@ -5,6 +5,7 @@ import antifraud.model.Configuration;
 import antifraud.model.Role;
 import antifraud.model.User;
 import antifraud.repository.ConfigurationRepository;
+import antifraud.repository.RoleRepository;
 import antifraud.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,7 @@ public class UserService {
     private final static String ADMIN_EXISTS = "admin_exists";
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final ConfigurationRepository configurationRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -35,29 +37,50 @@ public class UserService {
         log.info("Processing user: {}", user);
 
         // check if there's and admin in the configuration
-        final var adminConfiguration = configurationRepository
-                .findByKey("admin_exists")
-                .orElse(Configuration.builder()
-                        .key(ADMIN_EXISTS)
-                        .value("false")
-                        .build()
-                );
+//        final var adminConfiguration = configurationRepository
+//                .findByKey("admin_exists")
+//                .orElse(Configuration.builder()
+//                        .key(ADMIN_EXISTS)
+//                        .value("false")
+//                        .build()
+//                );
 
-        // set user role - depends on the fact that an admin already exists
-        if (adminConfiguration.getValue().equals("true")) {
-            log.info("Administrator account already exists, will create merchant from: {}", user);
-            // admin already exists
-            user.setRoles(Set.of(Role.builder().role(RoleType.MERCHANT).build()));
-            user.setActive(false);
-        } else {
+        final var adminRole = roleRepository
+                .findByRoleType(RoleType.ADMINISTRATOR)
+                .orElseGet(() -> {
+                    // if admin role does not exist, create and save it
+                    final var role = Role.builder().roleType(RoleType.ADMINISTRATOR).build();
+                    roleRepository.save(role);
+                    return role;
+                });
+
+        //final var adminUsers = userRepository.findByUserRolesIn(Set.of(adminRole));
+
+        System.out.println("HERE!!!");
+
+        final var adminUsers = userRepository.findFirstByUserRoles(adminRole);
+
+
+        if (adminUsers.isEmpty()) {
             log.info("No administrator account exists, will create administrator from: {}", user);
-            // no admin - create a new one
-            user.setRoles(Set.of(Role.builder().role(RoleType.ADMINISTRATOR).build()));
+            //final var role = roleRepository.findByRoleType(RoleType.ADMINISTRATOR).orElse(Role.builder().roleType(RoleType.ADMINISTRATOR).build());
+            user.setUserRoles(Set.of(adminRole));
             user.setActive(true);
-            adminConfiguration.setValue("true");
+        } else {
+            log.info("Administrator account already exists, will create merchant from: {}", user);
+            final var role = roleRepository
+                    .findByRoleType(RoleType.MERCHANT)
+                    .orElse(Role.builder().roleType(RoleType.MERCHANT).build());
+            user.setUserRoles(Set.of(role));
+            user.setActive(false);
         }
 
-        configurationRepository.save(adminConfiguration);
+//        final var losers = userRepository.findByUserRoles()
+//        if (adminConfiguration.getValue().equals("true")) {
+//        } else {
+//            adminConfiguration.setValue("true");
+//        }
+//        configurationRepository.save(adminConfiguration);
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepository.save(user);

@@ -9,7 +9,7 @@ import javax.persistence.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "tbl_transaction")
+@Table(name = "tbl_transactions")
 public class Transaction {
 
     @Id
@@ -23,7 +23,9 @@ public class Transaction {
             generator = "transaction_sequence"
     )
     private Long id;
+
     private Long amount;
+
     private String owner;
 
 }
