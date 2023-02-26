@@ -1,10 +1,8 @@
 package antifraud.service;
 
 import antifraud.enums.RoleType;
-import antifraud.model.Configuration;
 import antifraud.model.Role;
 import antifraud.model.User;
-import antifraud.repository.ConfigurationRepository;
 import antifraud.repository.RoleRepository;
 import antifraud.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,25 +23,14 @@ import java.util.Set;
 @Slf4j
 public class UserService {
 
-    private final static String ADMIN_EXISTS = "admin_exists";
-
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final ConfigurationRepository configurationRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public User enterUser(User user) {
-        log.info("Processing user: {}", user);
 
-        // check if there's and admin in the configuration
-//        final var adminConfiguration = configurationRepository
-//                .findByKey("admin_exists")
-//                .orElse(Configuration.builder()
-//                        .key(ADMIN_EXISTS)
-//                        .value("false")
-//                        .build()
-//                );
+        log.info("Processing user request: {}", user);
 
         final var adminRole = roleRepository
                 .findByRoleType(RoleType.ADMINISTRATOR)
@@ -54,13 +41,7 @@ public class UserService {
                     return role;
                 });
 
-        //final var adminUsers = userRepository.findByUserRolesIn(Set.of(adminRole));
-
-        System.out.println("HERE!!!");
-
-        final var adminUsers = userRepository.findFirstByUserRoles(adminRole);
-
-
+        final var adminUsers = userRepository.findFirstByUserRolesContaining(adminRole);
         if (adminUsers.isEmpty()) {
             log.info("No administrator account exists, will create administrator from: {}", user);
             //final var role = roleRepository.findByRoleType(RoleType.ADMINISTRATOR).orElse(Role.builder().roleType(RoleType.ADMINISTRATOR).build());
@@ -75,17 +56,10 @@ public class UserService {
             user.setActive(false);
         }
 
-//        final var losers = userRepository.findByUserRoles()
-//        if (adminConfiguration.getValue().equals("true")) {
-//        } else {
-//            adminConfiguration.setValue("true");
-//        }
-//        configurationRepository.save(adminConfiguration);
-
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepository.save(user);
 
-        log.info("Done processing user: {}", user);
+        log.info("Done processing user request: {}", user);
 
         return user;
     }
