@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 @Data
 @Builder
 @RequiredArgsConstructor
-public class UserOperationResponse {
+public class UserDeleteResponse {
 
     private final String username;
     private final String Status;

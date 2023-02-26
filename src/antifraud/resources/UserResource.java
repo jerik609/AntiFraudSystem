@@ -1,8 +1,7 @@
 package antifraud.resources;
 
-import antifraud.dto.UserEntryRequest;
-import antifraud.dto.UserEntryResponse;
-import antifraud.dto.UserOperationResponse;
+import antifraud.dto.*;
+import antifraud.enums.RoleType;
 import antifraud.model.User;
 import antifraud.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -79,11 +78,26 @@ public class UserResource {
         ).collect(Collectors.toList()), HttpStatus.OK);
     }
 
+    @PutMapping(value = "/role")
+    public ResponseEntity<UserRoleChangeResponse> changeUserRole(@RequestBody @Valid UserRoleChangeRequest request) {
+
+        final var roleType = RoleType.valueOf(request.getUsername());
+
+        if (!roleType.equals(RoleType.MERCHANT) && !roleType.equals(RoleType.SUPPORT)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        log.info("Changing user role: " + request.getUsername() + ", " + roleType.name());
+        userService.setUserRole(request.getUsername(), roleType);
+
+        return new ResponseEntity<>(new UserRoleChangeResponse(request.getUsername(), roleType.name()), HttpStatus.OK);
+    }
+
     @DeleteMapping(value = "/user/{username}")
-    public ResponseEntity<UserOperationResponse> deleteUser(@PathVariable String username) {
+    public ResponseEntity<UserDeleteResponse> deleteUser(@PathVariable String username) {
         log.info("Deleting user: " + username);
         userService.deleteUser(username);
-        return new ResponseEntity<>(new UserOperationResponse(username, "Deleted successfully!"), HttpStatus.OK);
+        return new ResponseEntity<>(new UserDeleteResponse(username, "Deleted successfully!"), HttpStatus.OK);
     }
 
 }

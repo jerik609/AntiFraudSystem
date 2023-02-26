@@ -98,4 +98,18 @@ public class UserService {
                 .enabled(user.isEnabled())
                 .build();
     }
+
+    @Transactional
+    public void setUserRole(String username, RoleType roleType) {
+
+        final var user = getUserByUsername(username).orElseThrow(() ->
+                new UsernameNotFoundException("User with username " + username + " does not exist"));
+
+        final var role = roleRepository.findByRoleType(roleType).orElseThrow(
+                () -> new RuntimeException("Unknown role: " + roleType.name()));
+
+        user.setUserRoles(Set.of(role));
+
+        userRepository.save(user);
+    }
 }
