@@ -11,7 +11,8 @@ import lombok.RequiredArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class UserActionResponse {
 
-    private final String id;
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    private final Long id;
     private final String name;
     private final String username;
     private final String status;

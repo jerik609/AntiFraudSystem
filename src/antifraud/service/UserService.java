@@ -104,6 +104,10 @@ public class UserService {
         final var user = getUserByUsername(username).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "User with username " + username + " does not exist"));
 
+        if (user.getUserRoles().stream().anyMatch(role -> role.getRoleType().equals(roleType))) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Role + " + roleType.name() + " already assigned to the user!");
+        }
+
         final var role = roleRepository.findByRoleType(roleType).orElse(Role.builder().roleType(roleType).build());
 
         // WEIRD!

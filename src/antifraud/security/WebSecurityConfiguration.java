@@ -30,8 +30,8 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .mvcMatchers("/h2/**").permitAll()
                 // secure the authentication/authorization api
                 .mvcMatchers(HttpMethod.POST, "/api/auth/user").permitAll()
-                .mvcMatchers(HttpMethod.DELETE, "/api/auth/user").hasAnyRole("ADMINISTRATOR")
-                .mvcMatchers(HttpMethod.GET, "/api/auth/list").hasAnyRole("ADMINISTRATOR")
+                .mvcMatchers(HttpMethod.DELETE, "/api/auth/user/*").hasAnyRole("ADMINISTRATOR")
+                .mvcMatchers(HttpMethod.GET, "/api/auth/list").hasAnyRole("ADMINISTRATOR", "SUPPORT")
                 .mvcMatchers(HttpMethod.PUT, "/api/auth/access").hasAnyRole("ADMINISTRATOR")
                 .mvcMatchers(HttpMethod.PUT, "/api/auth/role").hasAnyRole("ADMINISTRATOR")
                 // secure the antifraud api

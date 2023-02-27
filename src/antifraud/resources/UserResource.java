@@ -54,7 +54,7 @@ public class UserResource {
 
         return new ResponseEntity<>(
                 UserActionResponse.builder()
-                        .id(user.getId().toString())
+                        .id(user.getId())
                         .name(user.getName())
                         .username(user.getUsername())
                         .role(user.getUserRoles().stream()
@@ -72,6 +72,7 @@ public class UserResource {
 
         return new ResponseEntity<>(
                 users.stream().map(user -> UserActionResponse.builder()
+                                .id(user.getId())
                                 .name(user.getName())
                                 .username(user.getUsername())
                                 .role(user.getUserRoles().stream()
@@ -122,7 +123,7 @@ public class UserResource {
 
         return new ResponseEntity<>(
                 UserActionResponse.builder()
-                        .id(user.getId().toString())
+                        .id(user.getId())
                         .name(user.getName())
                         .username(request.getUsername())
                         .role(roleType.name())
@@ -148,7 +149,6 @@ public class UserResource {
 
         return new ResponseEntity<>(
                 UserActionResponse.builder()
-                        .name(request.getUsername())
                         .status("User " + request.getUsername() + " " + (userStatus.equals(UserStatus.LOCK) ? "locked" : "unlocked") + "!")
                         .build(),
                 HttpStatus.OK);
