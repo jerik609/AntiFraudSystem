@@ -1,6 +1,7 @@
 package antifraud.service;
 
 import antifraud.enums.RoleType;
+import antifraud.enums.UserStatus;
 import antifraud.model.Role;
 import antifraud.model.User;
 import antifraud.repository.RoleRepository;
@@ -112,4 +113,16 @@ public class UserService {
 
         userRepository.save(user);
     }
+
+    @Transactional
+    public void setUserActivationStatus(String username, UserStatus userStatus) {
+
+        final var user = getUserByUsername(username).orElseThrow(() ->
+                new UsernameNotFoundException("User with username " + username + " does not exist"));
+
+        user.setEnabled(userStatus.equals(UserStatus.UNLOCK));
+
+        userRepository.save(user);
+    }
+
 }

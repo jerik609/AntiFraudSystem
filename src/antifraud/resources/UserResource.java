@@ -2,6 +2,7 @@ package antifraud.resources;
 
 import antifraud.dto.*;
 import antifraud.enums.RoleType;
+import antifraud.enums.UserStatus;
 import antifraud.model.User;
 import antifraud.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -78,8 +79,22 @@ public class UserResource {
         ).collect(Collectors.toList()), HttpStatus.OK);
     }
 
+    @DeleteMapping(value = "/user/{username}")
+    public ResponseEntity<UserDeleteResponse> deleteUser(@PathVariable String username) {
+
+        log.info("Deleting user: " + username);
+
+        userService.deleteUser(username);
+
+        log.info("Deleted user: " + username);
+
+        return new ResponseEntity<>(new UserDeleteResponse(username, "Deleted successfully!"), HttpStatus.OK);
+    }
+
     @PutMapping(value = "/role")
     public ResponseEntity<UserRoleChangeResponse> changeUserRole(@RequestBody @Valid UserRoleChangeRequest request) {
+
+        log.info("Processing role change request: " + request);
 
         final var roleType = RoleType.valueOf(request.getUsername());
 
@@ -87,17 +102,27 @@ public class UserResource {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
 
-        log.info("Changing user role: " + request.getUsername() + ", " + roleType.name());
         userService.setUserRole(request.getUsername(), roleType);
+
+        log.info("Changed user " + request.getUsername() + " role to: " + roleType.name());
 
         return new ResponseEntity<>(new UserRoleChangeResponse(request.getUsername(), roleType.name()), HttpStatus.OK);
     }
 
-    @DeleteMapping(value = "/user/{username}")
-    public ResponseEntity<UserDeleteResponse> deleteUser(@PathVariable String username) {
-        log.info("Deleting user: " + username);
-        userService.deleteUser(username);
-        return new ResponseEntity<>(new UserDeleteResponse(username, "Deleted successfully!"), HttpStatus.OK);
+    @PutMapping(value = "/access")
+    public ResponseEntity<UserToggleResponse> changeActivationStatus(@RequestBody @Valid UserToggleRequest request) {
+
+        log.info("Processing user activation status: " + request);
+
+        final var userStatus = UserStatus.valueOf(request.getOperation());
+
+        userService.setUserActivationStatus(request.getUsername(), userStatus);
+
+        log.info("User " + request.getUsername() + " set to " + userStatus.name());
+
+        return new ResponseEntity<>(new UserToggleResponse(
+                "User " + request.getUsername() + " " + (userStatus.equals(UserStatus.LOCK) ? "locked" : "unlocked") + "!"),
+                HttpStatus.OK);
     }
 
 }
