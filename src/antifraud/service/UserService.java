@@ -19,9 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.transaction.Transactional;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -86,7 +84,7 @@ public class UserService {
     public UserDetails getUserDetails(String username) {
 
         final var user = getUserByUsername(username).orElseThrow(() ->
-                new UsernameNotFoundException("User with username " + username + " does not exist"));
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "User with username " + username + " does not exist"));
 
         final var grantedAuthorities = user.getUserRoles().stream()
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleType().name()))
@@ -101,24 +99,40 @@ public class UserService {
     }
 
     @Transactional
-    public void setUserRole(String username, RoleType roleType) {
+    public User setUserRole(String username, RoleType roleType) {
 
         final var user = getUserByUsername(username).orElseThrow(() ->
-                new UsernameNotFoundException("User with username " + username + " does not exist"));
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "User with username " + username + " does not exist"));
 
-        final var role = roleRepository.findByRoleType(roleType).orElseThrow(
-                () -> new RuntimeException("Unknown role: " + roleType.name()));
+        final var role = roleRepository.findByRoleType(roleType).orElse(Role.builder().roleType(roleType).build());
 
-        user.setUserRoles(Set.of(role));
+        // WEIRD!
+        // this fails - must use a mutable set because hibernate is trying to do something with it (why?)
+        // https://stackoverflow.com/questions/7428089/unsupportedoperationexception-merge-saving-many-to-many-relation-with-hibernate
+        // https://hibernate.atlassian.net/browse/HHH-13349
+        //user.setUserRoles(Set.of(role));
 
-        userRepository.save(user);
+        // this ->
+        //final var roles = new HashSet<Role>();
+        //roles.add(role);
+        //user.setUserRoles(roles);
+
+        // or this ->
+        user.getUserRoles().clear();
+        user.getUserRoles().add(role);
+
+        return userRepository.save(user);
     }
 
     @Transactional
     public void setUserActivationStatus(String username, UserStatus userStatus) {
 
         final var user = getUserByUsername(username).orElseThrow(() ->
-                new UsernameNotFoundException("User with username " + username + " does not exist"));
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "User with username " + username + " does not exist"));
+
+        if (user.getUserRoles().stream().anyMatch(role -> role.getRoleType().equals(RoleType.ADMINISTRATOR))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot lock out an ADMINISTRATOR!");
+        }
 
         user.setEnabled(userStatus.equals(UserStatus.UNLOCK));
 

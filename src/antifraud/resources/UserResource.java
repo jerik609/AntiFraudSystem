@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
+import java.security.InvalidParameterException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -104,18 +105,25 @@ public class UserResource {
 
         log.info("Processing role change request: " + request);
 
-        final var roleType = RoleType.valueOf(request.getRole());
-
-        if (!roleType.equals(RoleType.MERCHANT) && !roleType.equals(RoleType.SUPPORT)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        RoleType roleType;
+        try {
+            roleType = RoleType.valueOf(request.getRole());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown role: " + request.getRole());
         }
 
-        userService.setUserRole(request.getUsername(), roleType);
+        if (!roleType.equals(RoleType.MERCHANT) && !roleType.equals(RoleType.SUPPORT)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role can only be changed to MERCHANT or SUPPORT!");
+        }
+
+        final var user = userService.setUserRole(request.getUsername(), roleType);
 
         log.info("Changed user " + request.getUsername() + " role to: " + roleType.name());
 
         return new ResponseEntity<>(
                 UserActionResponse.builder()
+                        .id(user.getId().toString())
+                        .name(user.getName())
                         .username(request.getUsername())
                         .role(roleType.name())
                         .build(),
@@ -127,7 +135,12 @@ public class UserResource {
 
         log.info("Processing user activation status: " + request);
 
-        final var userStatus = UserStatus.valueOf(request.getOperation());
+        UserStatus userStatus;
+        try {
+            userStatus = UserStatus.valueOf(request.getOperation());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unknown user status: " + request.getOperation());
+        }
 
         userService.setUserActivationStatus(request.getUsername(), userStatus);
 

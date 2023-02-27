@@ -5,8 +5,8 @@ import lombok.*;
 import javax.validation.constraints.NotEmpty;
 
 @Data
-@Builder
-@RequiredArgsConstructor // because of builder
+//@Builder
+//@RequiredArgsConstructor // because of builder
 @NoArgsConstructor(force = true)
 public class UserEntryRequest {
 
