@@ -1,4 +1,4 @@
-package antifraud.dto;
+package antifraud.dto.request;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

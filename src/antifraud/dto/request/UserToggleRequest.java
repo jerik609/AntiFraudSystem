@@ -1,4 +1,4 @@
-package antifraud.dto;
+package antifraud.dto.request;
 
 import lombok.Builder;
 import lombok.Data;
@@ -7,9 +7,9 @@ import lombok.RequiredArgsConstructor;
 @Data
 @Builder
 @RequiredArgsConstructor
-public class UserDeleteResponse {
+public class UserToggleRequest {
 
     private final String username;
-    private final String Status;
+    private final String operation;
 
 }

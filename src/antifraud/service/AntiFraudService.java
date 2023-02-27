@@ -1,12 +1,11 @@
 package antifraud.service;
 
-import antifraud.dto.TransactionEntryRequest;
+import antifraud.dto.request.TransactionEntryRequest;
 import antifraud.enumeration.VerificationResult;
 import antifraud.model.Transaction;
 import antifraud.repository.TransactionRepository;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 

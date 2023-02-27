@@ -1,7 +1,7 @@
 package antifraud.resources;
 
-import antifraud.dto.TransactionEntryResponse;
-import antifraud.dto.TransactionEntryRequest;
+import antifraud.dto.response.TransactionActionResponse;
+import antifraud.dto.request.TransactionEntryRequest;
 import antifraud.service.AntiFraudService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,9 +18,9 @@ public class AntiFraudResource {
     private final AntiFraudService service;
 
     @PostMapping("/transaction")
-    public ResponseEntity<TransactionEntryResponse> postTransaction(@RequestBody @Valid TransactionEntryRequest transactionEntryRequest) {
+    public ResponseEntity<TransactionActionResponse> postTransaction(@RequestBody @Valid TransactionEntryRequest transactionEntryRequest) {
         final var result = service.verifyTransaction(transactionEntryRequest);
-        return new ResponseEntity<>(new TransactionEntryResponse(result.getName()), HttpStatus.OK);
+        return new ResponseEntity<>(TransactionActionResponse.builder().result(result.getName()).build(), HttpStatus.OK);
     }
 
 }

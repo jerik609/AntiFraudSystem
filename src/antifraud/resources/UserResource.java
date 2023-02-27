@@ -1,6 +1,9 @@
 package antifraud.resources;
 
-import antifraud.dto.*;
+import antifraud.dto.request.UserEntryRequest;
+import antifraud.dto.request.UserRoleChangeRequest;
+import antifraud.dto.request.UserToggleRequest;
+import antifraud.dto.response.UserActionResponse;
 import antifraud.enums.RoleType;
 import antifraud.enums.UserStatus;
 import antifraud.model.User;
@@ -26,7 +29,7 @@ public class UserResource {
     private final UserService userService;
 
     @PostMapping(value = "/user")
-    public ResponseEntity<UserEntryResponse> enterUser(@RequestBody @Valid UserEntryRequest userEntryRequest) {
+    public ResponseEntity<UserActionResponse> enterUser(@RequestBody @Valid UserEntryRequest userEntryRequest) {
 
         log.info("Processing user entry request: " + userEntryRequest);
 
@@ -49,8 +52,8 @@ public class UserResource {
         log.info("Created user: " + user);
 
         return new ResponseEntity<>(
-                UserEntryResponse.builder()
-                        .id(user.getId())
+                UserActionResponse.builder()
+                        .id(user.getId().toString())
                         .name(user.getName())
                         .username(user.getUsername())
                         .role(user.getUserRoles().stream()
@@ -62,25 +65,25 @@ public class UserResource {
     }
 
     @GetMapping(value = "/list")
-    public ResponseEntity<List<UserEntryResponse>> getUserList() {
+    public ResponseEntity<List<UserActionResponse>> getUserList() {
 
         final var users = userService.getUsers();
 
-        return new ResponseEntity<>(users.stream().map(user ->
-                UserEntryResponse.builder()
-                        .id(user.getId())
-                        .name(user.getName())
-                        .username(user.getUsername())
-                        .role(user.getUserRoles().stream()
-                                .findFirst().orElseThrow(() -> new RuntimeException("No role for user: " + user))
-                                .getRoleType()
-                                .name())
-                        .build()
-        ).collect(Collectors.toList()), HttpStatus.OK);
+        return new ResponseEntity<>(
+                users.stream().map(user -> UserActionResponse.builder()
+                                .name(user.getName())
+                                .username(user.getUsername())
+                                .role(user.getUserRoles().stream()
+                                        .findFirst().orElseThrow(() -> new RuntimeException("No role for user: " + user))
+                                        .getRoleType()
+                                        .name())
+                                .build())
+                        .collect(Collectors.toList()),
+                HttpStatus.OK);
     }
 
     @DeleteMapping(value = "/user/{username}")
-    public ResponseEntity<UserDeleteResponse> deleteUser(@PathVariable String username) {
+    public ResponseEntity<UserActionResponse> deleteUser(@PathVariable String username) {
 
         log.info("Deleting user: " + username);
 
@@ -88,15 +91,20 @@ public class UserResource {
 
         log.info("Deleted user: " + username);
 
-        return new ResponseEntity<>(new UserDeleteResponse(username, "Deleted successfully!"), HttpStatus.OK);
+        return new ResponseEntity<>(
+                UserActionResponse.builder()
+                        .username(username)
+                        .status("Deleted successfully!")
+                        .build(),
+                HttpStatus.OK);
     }
 
     @PutMapping(value = "/role")
-    public ResponseEntity<UserRoleChangeResponse> changeUserRole(@RequestBody @Valid UserRoleChangeRequest request) {
+    public ResponseEntity<UserActionResponse> changeUserRole(@RequestBody @Valid UserRoleChangeRequest request) {
 
         log.info("Processing role change request: " + request);
 
-        final var roleType = RoleType.valueOf(request.getUsername());
+        final var roleType = RoleType.valueOf(request.getRole());
 
         if (!roleType.equals(RoleType.MERCHANT) && !roleType.equals(RoleType.SUPPORT)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
@@ -106,11 +114,16 @@ public class UserResource {
 
         log.info("Changed user " + request.getUsername() + " role to: " + roleType.name());
 
-        return new ResponseEntity<>(new UserRoleChangeResponse(request.getUsername(), roleType.name()), HttpStatus.OK);
+        return new ResponseEntity<>(
+                UserActionResponse.builder()
+                        .username(request.getUsername())
+                        .role(roleType.name())
+                        .build(),
+                HttpStatus.OK);
     }
 
     @PutMapping(value = "/access")
-    public ResponseEntity<UserToggleResponse> changeActivationStatus(@RequestBody @Valid UserToggleRequest request) {
+    public ResponseEntity<UserActionResponse> changeActivationStatus(@RequestBody @Valid UserToggleRequest request) {
 
         log.info("Processing user activation status: " + request);
 
@@ -120,8 +133,11 @@ public class UserResource {
 
         log.info("User " + request.getUsername() + " set to " + userStatus.name());
 
-        return new ResponseEntity<>(new UserToggleResponse(
-                "User " + request.getUsername() + " " + (userStatus.equals(UserStatus.LOCK) ? "locked" : "unlocked") + "!"),
+        return new ResponseEntity<>(
+                UserActionResponse.builder()
+                        .name(request.getUsername())
+                        .status("User " + request.getUsername() + " " + (userStatus.equals(UserStatus.LOCK) ? "locked" : "unlocked") + "!")
+                        .build(),
                 HttpStatus.OK);
     }
 
