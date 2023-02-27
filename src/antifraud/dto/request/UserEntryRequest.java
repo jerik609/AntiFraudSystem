@@ -1,12 +1,11 @@
 package antifraud.dto.request;
 
-import lombok.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 
 @Data
-//@Builder
-//@RequiredArgsConstructor // because of builder
 @NoArgsConstructor(force = true)
 public class UserEntryRequest {
 
