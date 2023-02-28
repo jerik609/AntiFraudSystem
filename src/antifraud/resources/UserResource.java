@@ -7,7 +7,7 @@ import antifraud.dto.response.UserActionResponse;
 import antifraud.enums.RoleType;
 import antifraud.enums.UserStatus;
 import antifraud.model.User;
-import antifraud.service.UserService;
+import antifraud.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
-import java.security.InvalidParameterException;
 import java.util.List;
 import java.util.stream.Collectors;
 

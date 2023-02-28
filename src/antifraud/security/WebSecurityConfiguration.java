@@ -26,18 +26,32 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
         httpSecurity.authorizeRequests()
                 // actuator
                 .mvcMatchers("/actuator/**").permitAll()
+
                 // database console
                 .mvcMatchers("/h2/**").permitAll()
-                // secure the authentication/authorization api
+
+                // user management
                 .mvcMatchers(HttpMethod.POST, "/api/auth/user").permitAll()
-                .mvcMatchers(HttpMethod.DELETE, "/api/auth/user/*").hasAnyRole("ADMINISTRATOR")
-                .mvcMatchers(HttpMethod.GET, "/api/auth/list").hasAnyRole("ADMINISTRATOR", "SUPPORT")
-                .mvcMatchers(HttpMethod.PUT, "/api/auth/access").hasAnyRole("ADMINISTRATOR")
-                .mvcMatchers(HttpMethod.PUT, "/api/auth/role").hasAnyRole("ADMINISTRATOR")
-                // secure the antifraud api
-                .mvcMatchers(HttpMethod.POST, "/api/antifraud/transaction").hasAnyRole("MERCHANT")
+
+                .mvcMatchers(HttpMethod.DELETE, "/api/auth/user/*").hasAnyRole(RoleType.ADMINISTRATOR.name())
+                .mvcMatchers(HttpMethod.GET, "/api/auth/list").hasAnyRole(RoleType.ADMINISTRATOR.name(), RoleType.SUPPORT.name())
+
+                .mvcMatchers(HttpMethod.PUT, "/api/auth/access").hasAnyRole(RoleType.ADMINISTRATOR.name())
+                .mvcMatchers(HttpMethod.PUT, "/api/auth/role").hasAnyRole(RoleType.ADMINISTRATOR.name())
+
+                // transaction API
+                .mvcMatchers(HttpMethod.POST, "/api/antifraud/transaction").hasAnyRole(RoleType.MERCHANT.name())
+
+                // master data API
+                .mvcMatchers(HttpMethod.POST, "/api/antifraud/suspicious-ip").hasAnyRole(RoleType.SUPPORT.name())
+                .mvcMatchers(HttpMethod.DELETE, "/api/antifraud/suspicious-ip").hasAnyRole(RoleType.SUPPORT.name())
+                .mvcMatchers(HttpMethod.GET, "/api/antifraud/suspicious-ip").hasAnyRole(RoleType.SUPPORT.name())
+
+                .mvcMatchers(HttpMethod.POST, "/api/antifraud/stolencard").hasAnyRole(RoleType.SUPPORT.name())
+                .mvcMatchers(HttpMethod.DELETE, "/api/antifraud/stolencard").hasAnyRole(RoleType.SUPPORT.name())
+                .mvcMatchers(HttpMethod.GET, "/api/antifraud/stolencard").hasAnyRole(RoleType.SUPPORT.name())
+
                 // deny all the rest
-                .mvcMatchers(HttpMethod.GET, "/api/auth/hello").hasAnyRole(RoleType.ADMINISTRATOR.name(), RoleType.MERCHANT.name())
                 .mvcMatchers("/**").denyAll();
         // https://www.baeldung.com/spring-security-basic-authentication
         httpSecurity.httpBasic()

@@ -1,7 +1,9 @@
 package antifraud.dto.request;
 
+import antifraud.dto.validation.IpConstraint;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.LuhnCheck;
 
 import javax.validation.constraints.Positive;
 
@@ -36,5 +38,11 @@ public class TransactionEntryRequest {
 
     @Positive
     private final long amount;
+
+    @IpConstraint
+    private final String ip;
+
+    @LuhnCheck
+    private final String number;
 
 }

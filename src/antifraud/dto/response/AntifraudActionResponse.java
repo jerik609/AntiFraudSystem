@@ -9,8 +9,14 @@ import lombok.RequiredArgsConstructor;
 @Builder
 @RequiredArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class TransactionActionResponse {
+public class AntifraudActionResponse {
 
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    private final Long id;
+    private final String ip;
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    private final Long amount;
+    private final String number;
     private final String result;
 
 }
