@@ -20,4 +20,9 @@ public class IpValidator implements ConstraintValidator<IpConstraint, String> {
         return matcher.matches();
     }
 
+    public static boolean isValid(String ip) {
+        final var matcher = pattern.matcher(ip);
+        return matcher.matches();
+    }
+
 }

@@ -30,16 +30,4 @@ public class SuspiciousIp {
     )
     private String ip;
 
-    public static class IpValidator {
-
-        private static final String ipRegex = "^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)\\.?\\b){4}$";
-
-        private static final Pattern pattern = Pattern.compile(ipRegex);
-
-        public static boolean isValid(String ip) {
-            final var matcher = pattern.matcher(ip);
-            return matcher.matches();
-        }
-
-    }
 }

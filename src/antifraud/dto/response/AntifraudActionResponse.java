@@ -18,5 +18,6 @@ public class AntifraudActionResponse {
     private final Long amount;
     private final String number;
     private final String result;
+    private final String status;
 
 }

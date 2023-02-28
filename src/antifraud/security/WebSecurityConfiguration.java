@@ -44,11 +44,11 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
                 // master data API
                 .mvcMatchers(HttpMethod.POST, "/api/antifraud/suspicious-ip").hasAnyRole(RoleType.SUPPORT.name())
-                .mvcMatchers(HttpMethod.DELETE, "/api/antifraud/suspicious-ip").hasAnyRole(RoleType.SUPPORT.name())
+                .mvcMatchers(HttpMethod.DELETE, "/api/antifraud/suspicious-ip/*").hasAnyRole(RoleType.SUPPORT.name())
                 .mvcMatchers(HttpMethod.GET, "/api/antifraud/suspicious-ip").hasAnyRole(RoleType.SUPPORT.name())
 
                 .mvcMatchers(HttpMethod.POST, "/api/antifraud/stolencard").hasAnyRole(RoleType.SUPPORT.name())
-                .mvcMatchers(HttpMethod.DELETE, "/api/antifraud/stolencard").hasAnyRole(RoleType.SUPPORT.name())
+                .mvcMatchers(HttpMethod.DELETE, "/api/antifraud/stolencard/*").hasAnyRole(RoleType.SUPPORT.name())
                 .mvcMatchers(HttpMethod.GET, "/api/antifraud/stolencard").hasAnyRole(RoleType.SUPPORT.name())
 
                 // deny all the rest
