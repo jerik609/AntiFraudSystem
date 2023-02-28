@@ -9,11 +9,11 @@ import javax.validation.constraints.NotEmpty;
 @NoArgsConstructor(force = true)
 public class UserEntryRequest {
 
-    @NotEmpty
+    @NotEmpty(message = "name must not be empty")
     private final String name;
-    @NotEmpty
+    @NotEmpty(message = "username must not be empty")
     private final String username;
-    @NotEmpty
+    @NotEmpty(message = "password must not be empty")
     private final String password;
 
 }
