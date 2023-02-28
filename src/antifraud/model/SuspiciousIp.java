@@ -22,6 +22,10 @@ public class SuspiciousIp {
             sequenceName = "suspicious_ip_sequence",
             allocationSize = 1
     )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "suspicious_ip_sequence"
+    )
     private long id;
 
     @Column(

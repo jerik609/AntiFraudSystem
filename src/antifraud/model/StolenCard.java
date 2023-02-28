@@ -21,6 +21,10 @@ public class StolenCard {
             sequenceName = "stolen_card_sequence",
             allocationSize = 1
     )
+    @GeneratedValue(
+            strategy = GenerationType.SEQUENCE,
+            generator = "stolen_card_sequence"
+    )
     private long id;
 
     @Column(
