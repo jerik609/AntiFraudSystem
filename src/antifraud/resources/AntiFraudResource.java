@@ -140,7 +140,7 @@ public class AntiFraudResource {
                 HttpStatus.OK);
     }
 
-    @GetMapping("/suspicious-ip")
+    @GetMapping("/stolencard")
     public ResponseEntity<List<AntifraudActionResponse>> getStolenCards() {
 
         List<StolenCard> stolenCards = service.getAllStolenCards();
