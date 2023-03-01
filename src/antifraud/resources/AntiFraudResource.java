@@ -4,15 +4,19 @@ import antifraud.dto.request.StolenCardEntryRequest;
 import antifraud.dto.request.SuspiciousIpEntryRequest;
 import antifraud.dto.response.AntifraudActionResponse;
 import antifraud.dto.request.TransactionEntryRequest;
-import antifraud.dto.validation.IpConstraint;
 import antifraud.dto.validation.IpValidator;
-import antifraud.dto.validation.TransactionAmountValidator;
+import antifraud.enums.TransactionValidationResult;
 import antifraud.model.StolenCard;
 import antifraud.model.SuspiciousIp;
 import antifraud.model.Transaction;
 import antifraud.services.AntiFraudService;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.validator.cfg.defs.CreditCardNumberDef;
+import org.hibernate.validator.constraints.CreditCardNumber;
 import org.hibernate.validator.constraints.LuhnCheck;
+import org.hibernate.validator.internal.constraintvalidators.hv.LuhnCheckValidator;
+import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorFactoryImpl;
+import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorManager;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +24,13 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.validation.ConstraintValidatorContext;
+import javax.validation.ConstraintValidatorFactory;
+import javax.validation.Payload;
 import javax.validation.Valid;
-import javax.websocket.server.PathParam;
+import java.lang.annotation.Annotation;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 @RestController
@@ -32,34 +40,34 @@ public class AntiFraudResource {
 
     private final AntiFraudService service;
 
+    private final LuhnCheckValidator luhnCheckValidator;
+
     @PostMapping("/transaction")
     public ResponseEntity<AntifraudActionResponse> postTransaction(@RequestBody @Valid TransactionEntryRequest transactionEntryRequest) {
 
-        final var amountValidationResult = TransactionAmountValidator.validate(transactionEntryRequest.getAmount());
+        final TreeMap<String, TransactionValidationResult> validationResult = new TreeMap<>();
 
-        // validate transaction amount
-        if (!amountValidationResult.equals(TransactionAmountValidator.VerificationResult.ALLOWED)) {
+        service.enterTransaction(Transaction.builder()
+                .amount(transactionEntryRequest.getAmount())
+                .ip(transactionEntryRequest.getIp())
+                .number(transactionEntryRequest.getNumber())
+                .owner(SecurityContextHolder.getContext().getAuthentication().getName())
+                .build(),
+                validationResult);
+
+        if (validationResult.isEmpty()) {
             return new ResponseEntity<>(AntifraudActionResponse.builder()
-                    .amount(transactionEntryRequest.getAmount())
-                    .ip(transactionEntryRequest.getIp())
-                    .number(transactionEntryRequest.getNumber())
-                    .result(amountValidationResult.getName())
+                    .result(TransactionValidationResult.ALLOWED.getName())
+                    .info("none")
+                    .build(),
+                    HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(AntifraudActionResponse.builder()
+                    .result(validationResult.lastEntry().getValue().getName())
+                    .info(String.join(",", validationResult.keySet()))
                     .build(),
                     HttpStatus.OK);
         }
-
-        final var transaction = Transaction.builder()
-                .owner(SecurityContextHolder.getContext().getAuthentication().getName())
-                .amount(transactionEntryRequest.getAmount())
-                .build();
-
-        final var enteredTransaction = service.enterTransaction(transaction);
-
-        return new ResponseEntity<>(AntifraudActionResponse.builder()
-                .id(enteredTransaction.getId())
-                .result(amountValidationResult.getName())
-                .build(),
-                HttpStatus.OK);
     }
 
     @PostMapping("/suspicious-ip")
@@ -130,7 +138,11 @@ public class AntiFraudResource {
     }
 
     @DeleteMapping("/stolencard/{number}")
-    public ResponseEntity<AntifraudActionResponse> deleteStolenCard(@PathVariable @LuhnCheck String number) {
+    public ResponseEntity<AntifraudActionResponse> deleteStolenCard(@PathVariable String number) {
+
+        if (!luhnCheckValidator.isValid(number, null)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid credit card number");
+        }
 
         service.deleteStolenCard(number);
 

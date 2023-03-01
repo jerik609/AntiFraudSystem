@@ -1,5 +1,7 @@
 package antifraud.services;
 
+import antifraud.dto.validation.TransactionAmountValidator;
+import antifraud.enums.TransactionValidationResult;
 import antifraud.model.StolenCard;
 import antifraud.model.SuspiciousIp;
 import antifraud.model.Transaction;
@@ -15,6 +17,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.Optional;
+import java.util.TreeMap;
 
 @Service
 @Log4j2
@@ -33,8 +37,28 @@ public class AntiFraudService {
         this.stolenCardRepository = stolenCardRepository;
     }
 
-    public Transaction enterTransaction(Transaction transaction) {
-        return transactionRepository.save(transaction);
+    @Transactional
+    public void enterTransaction(Transaction transaction, TreeMap<String, TransactionValidationResult> validationResult) {
+
+        // amount validation
+        final var amountValidation = TransactionAmountValidator.validate(transaction.getAmount());
+        if (!amountValidation.equals(TransactionValidationResult.ALLOWED)) {
+            validationResult.put("amount", amountValidation);
+        }
+
+        // IP validation
+        if (suspiciousIpRepository.findByIp(transaction.getIp()).isPresent()) {
+            validationResult.put("ip", TransactionValidationResult.PROHIBITED);
+        }
+
+        // card number
+        if (stolenCardRepository.findByNumber(transaction.getNumber()).isPresent()) {
+            validationResult.put("card-number", TransactionValidationResult.PROHIBITED);
+        }
+
+        if (validationResult.isEmpty()) {
+            transactionRepository.save(transaction);
+        }
     }
 
     public SuspiciousIp enterSuspiciousIp(SuspiciousIp suspiciousIp) {

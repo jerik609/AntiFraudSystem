@@ -28,4 +28,8 @@ public class Transaction {
 
     private String owner;
 
+    private String ip;
+
+    private String number;
+
 }

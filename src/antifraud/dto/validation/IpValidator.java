@@ -16,6 +16,9 @@ public class IpValidator implements ConstraintValidator<IpConstraint, String> {
 
     @Override
     public boolean isValid(String ip, ConstraintValidatorContext context) {
+        if (ip == null || ip.isBlank()) {
+            return false;
+        }
         final var matcher = pattern.matcher(ip);
         return matcher.matches();
     }
