@@ -30,6 +30,7 @@ import javax.validation.Payload;
 import javax.validation.Valid;
 import java.lang.annotation.Annotation;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -45,7 +46,7 @@ public class AntiFraudResource {
     @PostMapping("/transaction")
     public ResponseEntity<AntifraudActionResponse> postTransaction(@RequestBody @Valid TransactionEntryRequest transactionEntryRequest) {
 
-        final TreeMap<String, TransactionValidationResult> validationResult = new TreeMap<>();
+        final var validationResult = new TreeMap<String, TransactionValidationResult>();
 
         service.enterTransaction(Transaction.builder()
                 .amount(transactionEntryRequest.getAmount())
@@ -62,9 +63,13 @@ public class AntiFraudResource {
                     .build(),
                     HttpStatus.OK);
         } else {
+            final var lastResult = validationResult.lastEntry().getValue();
             return new ResponseEntity<>(AntifraudActionResponse.builder()
-                    .result(validationResult.lastEntry().getValue().getName())
-                    .info(String.join(",", validationResult.keySet()))
+                    .result(lastResult.getName())
+                    .info(validationResult.entrySet().stream()
+                            .filter(entry -> entry.getValue().equals(lastResult))
+                            .map(Map.Entry::getKey)
+                            .collect(Collectors.joining(", ")))
                     .build(),
                     HttpStatus.OK);
         }
