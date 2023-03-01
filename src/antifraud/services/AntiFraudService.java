@@ -89,7 +89,7 @@ public class AntiFraudService {
                 .region(region)
                 .date(timestamp)
                 .owner(SecurityContextHolder.getContext().getAuthentication().getName())
-                .validationResult(validationResult.lastEntry().getValue())
+                .validationResult(validationResult.isEmpty() ? TransactionValidationResult.ALLOWED : validationResult.lastEntry().getValue())
                 .build();
 
         transactionRepository.save(transaction);
