@@ -4,7 +4,6 @@ import antifraud.enums.TransactionValidationResult;
 import lombok.*;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
@@ -50,5 +49,20 @@ public class Transaction {
 
     @Enumerated(EnumType.STRING)
     private TransactionValidationResult validationResult;
+
+    @OneToOne(
+            orphanRemoval = true,
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}
+    )
+    @JoinColumn(
+            name = "feedback_id",
+            referencedColumnName = "id"
+    )
+    private Feedback feedback;
+
+    public void addFeedback(Feedback feedback) {
+        this.feedback = feedback;
+        feedback.setTransaction(this);
+    }
 
 }

@@ -2,34 +2,23 @@ package antifraud.resources;
 
 import antifraud.dto.request.StolenCardEntryRequest;
 import antifraud.dto.request.SuspiciousIpEntryRequest;
+import antifraud.dto.request.TransactionFeedbackRequest;
 import antifraud.dto.response.AntifraudActionResponse;
 import antifraud.dto.request.TransactionEntryRequest;
 import antifraud.dto.validation.IpValidator;
 import antifraud.enums.TransactionValidationResult;
-import antifraud.model.Region;
 import antifraud.model.StolenCard;
 import antifraud.model.SuspiciousIp;
-import antifraud.model.Transaction;
 import antifraud.services.AntiFraudService;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.validator.cfg.defs.CreditCardNumberDef;
-import org.hibernate.validator.constraints.CreditCardNumber;
-import org.hibernate.validator.constraints.LuhnCheck;
 import org.hibernate.validator.internal.constraintvalidators.hv.LuhnCheckValidator;
-import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorFactoryImpl;
-import org.hibernate.validator.internal.engine.constraintvalidation.ConstraintValidatorManager;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.validation.ConstraintValidatorContext;
-import javax.validation.ConstraintValidatorFactory;
-import javax.validation.Payload;
 import javax.validation.Valid;
-import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -68,6 +57,25 @@ public class AntiFraudResource {
                     .build(),
                     HttpStatus.OK);
         }
+    }
+
+    @PutMapping("/transaction")
+    public ResponseEntity<AntifraudActionResponse> putFeedback(@RequestBody @Valid TransactionFeedbackRequest transactionFeedbackRequest) {
+
+        final var transaction = service.applyTransactionFeedback(transactionFeedbackRequest);
+
+        return new ResponseEntity<>(AntifraudActionResponse.builder()
+                .id(transaction.getId())
+                .amount(transaction.getAmount())
+                .ip(transaction.getIp())
+                .number(transaction.getNumber())
+                //.region(transaction.getRegion()) // this will fail!
+
+                // TODO: finish :-) probably will have to move the building of the response to the service - since it has
+                //  an open DB transaction/session
+
+                .build(),
+                HttpStatus.OK);
     }
 
     @PostMapping("/suspicious-ip")

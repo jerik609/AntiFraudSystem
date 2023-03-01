@@ -1,13 +1,10 @@
 package antifraud.services;
 
 import antifraud.dto.request.TransactionEntryRequest;
-import antifraud.dto.validation.TransactionAmountValidator;
+import antifraud.dto.request.TransactionFeedbackRequest;
 import antifraud.enums.RegionType;
 import antifraud.enums.TransactionValidationResult;
-import antifraud.model.Region;
-import antifraud.model.StolenCard;
-import antifraud.model.SuspiciousIp;
-import antifraud.model.Transaction;
+import antifraud.model.*;
 import antifraud.repository.RegionRepository;
 import antifraud.repository.StolenCardRepository;
 import antifraud.repository.SuspiciousIpRepository;
@@ -21,8 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.transaction.Transactional;
-import java.text.DateFormat;
-import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -38,17 +33,20 @@ public class AntiFraudService {
     private final SuspiciousIpRepository suspiciousIpRepository;
     private final StolenCardRepository stolenCardRepository;
     private final RegionRepository regionRepository;
+    private final LimitService limitService;
 
     @Autowired
     AntiFraudService(
             TransactionRepository transactionRepository,
             SuspiciousIpRepository suspiciousIpRepository,
             StolenCardRepository stolenCardRepository,
-            RegionRepository regionRepository) {
+            RegionRepository regionRepository,
+            LimitService limitService) {
         this.transactionRepository = transactionRepository;
         this.suspiciousIpRepository = suspiciousIpRepository;
         this.stolenCardRepository = stolenCardRepository;
         this.regionRepository = regionRepository;
+        this.limitService = limitService;
     }
 
     @Transactional
@@ -68,7 +66,7 @@ public class AntiFraudService {
                 .orElseGet(() -> regionRepository.save(Region.builder().regionType(regionType).build()));
 
         // amount validation
-        final var amountValidation = TransactionAmountValidator.validate(transactionEntryRequest.getAmount());
+        final var amountValidation = limitService.validate(transactionEntryRequest.getAmount());
         if (!amountValidation.equals(TransactionValidationResult.ALLOWED)) {
             validationResult.put("amount", amountValidation);
         }
@@ -156,4 +154,34 @@ public class AntiFraudService {
         return stolenCardRepository.findAll(Sort.by("id").ascending());
     }
 
+    @Transactional
+    public Transaction applyTransactionFeedback(TransactionFeedbackRequest transactionFeedbackRequest) {
+
+        TransactionValidationResult validationFeedback;
+        try {
+            validationFeedback = TransactionValidationResult.valueOf(transactionFeedbackRequest.getFeedback());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown feedback type: " + transactionFeedbackRequest.getFeedback());
+        }
+
+        // transaction does not exists
+        Transaction transaction = transactionRepository.findById(transactionFeedbackRequest.getTransactionId()).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction with id " + transactionFeedbackRequest.getTransactionId() + " not found."));
+
+        // transaction already has feedback
+        if (transaction.getFeedback() != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Feedback for transaction id " + transactionFeedbackRequest.getTransactionId() + " already exists.");
+        }
+
+        // create feedback and persist it
+        final var feedback = Feedback.builder().validationResult(validationFeedback).build();
+        transaction.addFeedback(feedback);
+
+        final var savedTransaction = transactionRepository.save(transaction);
+
+        // update limits, do it after DB writes, since we can rollback those, but we cannot rollback the system changes so easily, if the DB fails
+        limitService.updateLimits(transaction);
+
+        return savedTransaction;
+    }
 }

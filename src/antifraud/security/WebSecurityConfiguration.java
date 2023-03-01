@@ -3,7 +3,6 @@ package antifraud.security;
 import antifraud.enums.RoleType;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -41,6 +40,9 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
                 // transaction API
                 .mvcMatchers(HttpMethod.POST, "/api/antifraud/transaction").hasAnyRole(RoleType.MERCHANT.name())
+                .mvcMatchers(HttpMethod.PUT, "/api/antifraud/transaction").hasAnyRole(RoleType.SUPPORT.name())
+
+                .mvcMatchers(HttpMethod.GET, "/api/antifraud/history").hasAnyRole(RoleType.SUPPORT.name())
 
                 // master data API
                 .mvcMatchers(HttpMethod.POST, "/api/antifraud/suspicious-ip").hasAnyRole(RoleType.SUPPORT.name())
