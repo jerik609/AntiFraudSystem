@@ -64,7 +64,8 @@ public class AntiFraudService {
         final var localDateTime = LocalDateTime.parse(transactionEntryRequest.getDate(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         final var timestamp = Date.from(localDateTime.toInstant(ZoneOffset.UTC));
 
-        final var region = regionRepository.findByRegionType(regionType).orElse(Region.builder().regionType(regionType).build());
+        final var region = regionRepository.findByRegionType(regionType)
+                .orElseGet(() -> regionRepository.save(Region.builder().regionType(regionType).build()));
 
         // amount validation
         final var amountValidation = TransactionAmountValidator.validate(transactionEntryRequest.getAmount());
@@ -81,6 +82,34 @@ public class AntiFraudService {
         if (stolenCardRepository.findByNumber(transactionEntryRequest.getNumber()).isPresent()) {
             validationResult.put("card-number", TransactionValidationResult.PROHIBITED);
         }
+
+        final var numberOfDistinctRegions = transactionRepository.countDistinctRegionsForCreditCardAndNotRegionAndWithinPeriod(
+                transactionEntryRequest.getNumber(),
+                region,
+                Date.from(localDateTime.minusHours(1).toInstant(ZoneOffset.UTC)),
+                timestamp
+        );
+
+        final var numberOfDistinctIps = transactionRepository.countDistinctIpsForCreditCardAndNotIpAndWithinPeriod(
+                transactionEntryRequest.getNumber(),
+                transactionEntryRequest.getIp(),
+                Date.from(localDateTime.minusHours(1).toInstant(ZoneOffset.UTC)),
+                timestamp
+        );
+
+        if (numberOfDistinctRegions == 2) {
+            validationResult.put("region-correlation", TransactionValidationResult.MANUAL_PROCESSING);
+        } else if (numberOfDistinctRegions > 2) {
+            validationResult.put("region-correlation", TransactionValidationResult.PROHIBITED);
+        }
+
+        if (numberOfDistinctIps == 2) {
+            validationResult.put("ip-correlation", TransactionValidationResult.MANUAL_PROCESSING);
+        } else if (numberOfDistinctIps > 2) {
+            validationResult.put("ip-correlation", TransactionValidationResult.PROHIBITED);
+        }
+
+        log.info("validationResult = {}", validationResult);
 
         final var transaction = Transaction.builder()
                 .amount(transactionEntryRequest.getAmount())
