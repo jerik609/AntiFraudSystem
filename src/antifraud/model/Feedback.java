@@ -32,7 +32,7 @@ public class Feedback {
     private TransactionValidationResult validationResult;
 
     @OneToOne(
-            mappedBy = "id",
+            mappedBy = "feedback",
             optional = false//,
             //cascade = CascadeType.MERGE
     )

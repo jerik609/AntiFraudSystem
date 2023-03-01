@@ -165,12 +165,12 @@ public class AntiFraudService {
         }
 
         // transaction does not exists
-        Transaction transaction = transactionRepository.findById(transactionFeedbackRequest.getTransactionId()).orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction with id " + transactionFeedbackRequest.getTransactionId() + " not found."));
+        Transaction transaction = transactionRepository.findById(transactionFeedbackRequest.getId()).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction with id " + transactionFeedbackRequest.getId() + " not found."));
 
         // transaction already has feedback
         if (transaction.getFeedback() != null) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Feedback for transaction id " + transactionFeedbackRequest.getTransactionId() + " already exists.");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Feedback for transaction id " + transactionFeedbackRequest.getId() + " already exists.");
         }
 
         // create feedback and persist it
