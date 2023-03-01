@@ -6,6 +6,7 @@ import antifraud.dto.response.AntifraudActionResponse;
 import antifraud.dto.request.TransactionEntryRequest;
 import antifraud.dto.validation.IpValidator;
 import antifraud.enums.TransactionValidationResult;
+import antifraud.model.Region;
 import antifraud.model.StolenCard;
 import antifraud.model.SuspiciousIp;
 import antifraud.model.Transaction;
@@ -48,13 +49,7 @@ public class AntiFraudResource {
 
         final var validationResult = new TreeMap<String, TransactionValidationResult>();
 
-        service.enterTransaction(Transaction.builder()
-                .amount(transactionEntryRequest.getAmount())
-                .ip(transactionEntryRequest.getIp())
-                .number(transactionEntryRequest.getNumber())
-                .owner(SecurityContextHolder.getContext().getAuthentication().getName())
-                .build(),
-                validationResult);
+        service.enterTransaction(transactionEntryRequest, validationResult);
 
         if (validationResult.isEmpty()) {
             return new ResponseEntity<>(AntifraudActionResponse.builder()

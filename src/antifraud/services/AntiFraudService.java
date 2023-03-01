@@ -1,10 +1,14 @@
 package antifraud.services;
 
+import antifraud.dto.request.TransactionEntryRequest;
 import antifraud.dto.validation.TransactionAmountValidator;
+import antifraud.enums.RegionType;
 import antifraud.enums.TransactionValidationResult;
+import antifraud.model.Region;
 import antifraud.model.StolenCard;
 import antifraud.model.SuspiciousIp;
 import antifraud.model.Transaction;
+import antifraud.repository.RegionRepository;
 import antifraud.repository.StolenCardRepository;
 import antifraud.repository.SuspiciousIpRepository;
 import antifraud.repository.TransactionRepository;
@@ -12,12 +16,18 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.transaction.Transactional;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.TreeMap;
 
 @Service
@@ -25,40 +35,64 @@ import java.util.TreeMap;
 public class AntiFraudService {
 
     private final TransactionRepository transactionRepository;
-
     private final SuspiciousIpRepository suspiciousIpRepository;
-
     private final StolenCardRepository stolenCardRepository;
+    private final RegionRepository regionRepository;
 
     @Autowired
-    AntiFraudService(TransactionRepository transactionRepository, SuspiciousIpRepository suspiciousIpRepository, StolenCardRepository stolenCardRepository) {
+    AntiFraudService(
+            TransactionRepository transactionRepository,
+            SuspiciousIpRepository suspiciousIpRepository,
+            StolenCardRepository stolenCardRepository,
+            RegionRepository regionRepository) {
         this.transactionRepository = transactionRepository;
         this.suspiciousIpRepository = suspiciousIpRepository;
         this.stolenCardRepository = stolenCardRepository;
+        this.regionRepository = regionRepository;
     }
 
     @Transactional
-    public void enterTransaction(Transaction transaction, TreeMap<String, TransactionValidationResult> validationResult) {
+    public void enterTransaction(TransactionEntryRequest transactionEntryRequest, TreeMap<String, TransactionValidationResult> validationResult) {
+
+        RegionType regionType;
+        try {
+            regionType = RegionType.valueOf(transactionEntryRequest.getRegion());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown region: " + transactionEntryRequest.getRegion());
+        }
+
+        final var localDateTime = LocalDateTime.parse(transactionEntryRequest.getDate(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        final var timestamp = Date.from(localDateTime.toInstant(ZoneOffset.UTC));
+
+        final var region = regionRepository.findByRegionType(regionType).orElse(Region.builder().regionType(regionType).build());
 
         // amount validation
-        final var amountValidation = TransactionAmountValidator.validate(transaction.getAmount());
+        final var amountValidation = TransactionAmountValidator.validate(transactionEntryRequest.getAmount());
         if (!amountValidation.equals(TransactionValidationResult.ALLOWED)) {
             validationResult.put("amount", amountValidation);
         }
 
         // IP validation
-        if (suspiciousIpRepository.findByIp(transaction.getIp()).isPresent()) {
+        if (suspiciousIpRepository.findByIp(transactionEntryRequest.getIp()).isPresent()) {
             validationResult.put("ip", TransactionValidationResult.PROHIBITED);
         }
 
         // card number
-        if (stolenCardRepository.findByNumber(transaction.getNumber()).isPresent()) {
+        if (stolenCardRepository.findByNumber(transactionEntryRequest.getNumber()).isPresent()) {
             validationResult.put("card-number", TransactionValidationResult.PROHIBITED);
         }
 
-        if (validationResult.isEmpty()) {
-            transactionRepository.save(transaction);
-        }
+        final var transaction = Transaction.builder()
+                .amount(transactionEntryRequest.getAmount())
+                .ip(transactionEntryRequest.getIp())
+                .number(transactionEntryRequest.getNumber())
+                .region(region)
+                .date(timestamp)
+                .owner(SecurityContextHolder.getContext().getAuthentication().getName())
+                .validationResult(validationResult.lastEntry().getValue())
+                .build();
+
+        transactionRepository.save(transaction);
     }
 
     public SuspiciousIp enterSuspiciousIp(SuspiciousIp suspiciousIp) {

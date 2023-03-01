@@ -1,8 +1,11 @@
 package antifraud.model;
 
+import antifraud.enums.TransactionValidationResult;
 import lombok.*;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
+import java.util.Date;
 
 @Entity
 @Data
@@ -26,10 +29,26 @@ public class Transaction {
 
     private Long amount;
 
-    private String owner;
-
     private String ip;
 
     private String number;
+
+    @ManyToOne(
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE},
+            optional = false
+    )
+    @JoinColumn(
+            name = "region_id",
+            referencedColumnName = "id"
+    )
+    private Region region;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date date;
+
+    private String owner;
+
+    @Enumerated(EnumType.STRING)
+    private TransactionValidationResult validationResult;
 
 }

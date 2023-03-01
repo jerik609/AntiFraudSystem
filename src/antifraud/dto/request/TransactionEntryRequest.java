@@ -4,7 +4,9 @@ import antifraud.dto.validation.IpConstraint;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.LuhnCheck;
+import org.springframework.format.annotation.DateTimeFormat;
 
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Positive;
 
 // https://github.com/projectlombok/lombok/issues/1563#issuecomment-363460962
@@ -39,10 +41,19 @@ public class TransactionEntryRequest {
     @Positive
     private final long amount;
 
+    @NotEmpty
     @IpConstraint
     private final String ip;
 
+    @NotEmpty
     @LuhnCheck
     private final String number;
+
+    @NotEmpty
+    private final String region;
+
+    @NotEmpty
+    @DateTimeFormat(pattern = "yyyy-MM-ddTHH:mm:ss")
+    private final String date;
 
 }
