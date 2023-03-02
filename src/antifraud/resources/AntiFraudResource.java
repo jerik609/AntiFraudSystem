@@ -61,20 +61,8 @@ public class AntiFraudResource {
 
     @PutMapping("/transaction")
     public ResponseEntity<AntifraudActionResponse> putFeedback(@RequestBody @Valid TransactionFeedbackRequest transactionFeedbackRequest) {
-
-        final var transaction = service.applyTransactionFeedback(transactionFeedbackRequest);
-
-        return new ResponseEntity<>(AntifraudActionResponse.builder()
-                .id(transaction.getId())
-                .amount(transaction.getAmount())
-                .ip(transaction.getIp())
-                .number(transaction.getNumber())
-                //.region(transaction.getRegion()) // this will fail!
-
-                // TODO: finish :-) probably will have to move the building of the response to the service - since it has
-                //  an open DB transaction/session
-
-                .build(),
+        final var antifraudActionResponse = service.applyTransactionFeedback(transactionFeedbackRequest);
+        return new ResponseEntity<>(antifraudActionResponse,
                 HttpStatus.OK);
     }
 

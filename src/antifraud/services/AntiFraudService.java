@@ -2,6 +2,7 @@ package antifraud.services;
 
 import antifraud.dto.request.TransactionEntryRequest;
 import antifraud.dto.request.TransactionFeedbackRequest;
+import antifraud.dto.response.AntifraudActionResponse;
 import antifraud.enums.RegionType;
 import antifraud.enums.TransactionValidationResult;
 import antifraud.model.*;
@@ -11,7 +12,6 @@ import antifraud.repository.SuspiciousIpRepository;
 import antifraud.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.transaction.Transactional;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -143,7 +144,7 @@ public class AntiFraudService {
     }
 
     @Transactional
-    public Transaction applyTransactionFeedback(TransactionFeedbackRequest transactionFeedbackRequest) {
+    public AntifraudActionResponse applyTransactionFeedback(TransactionFeedbackRequest transactionFeedbackRequest) {
 
         TransactionValidationResult validationFeedback;
         try {
@@ -168,8 +169,19 @@ public class AntiFraudService {
         final var savedTransaction = transactionRepository.save(transaction);
 
         // update limits, do it after DB writes, since we can rollback those, but we cannot rollback the system changes so easily, if the DB fails
-        limitService.updateLimits(transaction);
+        limitService.updateLimits(savedTransaction);
 
-        return savedTransaction;
+        final var dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+
+        return AntifraudActionResponse.builder()
+                .transactionId(savedTransaction.getId())
+                .amount(savedTransaction.getAmount())
+                .ip(savedTransaction.getIp())
+                .number(savedTransaction.getNumber())
+                .region(savedTransaction.getRegion().getRegionType().name())
+                .date(dateFormat.format(savedTransaction.getDate()))
+                .result(savedTransaction.getValidationResult().getName())
+                .feedback(savedTransaction.getFeedback().getValidationResult().getName())
+                .build();
     }
 }
