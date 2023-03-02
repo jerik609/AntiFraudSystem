@@ -16,7 +16,8 @@ public class CardLimits {
     @SequenceGenerator(
             name = "card_limits_sequence",
             sequenceName = "card_limits_sequence",
-            initialValue = 0
+            initialValue = 0,
+            allocationSize = 1
     )
     @GeneratedValue(
             strategy = GenerationType.SEQUENCE,

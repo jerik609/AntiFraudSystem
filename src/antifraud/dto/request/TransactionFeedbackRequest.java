@@ -9,7 +9,7 @@ import javax.validation.constraints.NotEmpty;
 @NoArgsConstructor(force = true)
 public class TransactionFeedbackRequest {
 
-    private final long id;
+    private final long transactionId;
 
     @NotEmpty
     private final String feedback;
