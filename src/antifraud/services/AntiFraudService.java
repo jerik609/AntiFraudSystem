@@ -33,6 +33,8 @@ import java.util.stream.Collectors;
 @Log4j2
 public class AntiFraudService {
 
+    private final static SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+
     private final TransactionRepository transactionRepository;
     private final SuspiciousIpRepository suspiciousIpRepository;
     private final StolenCardRepository stolenCardRepository;
@@ -56,31 +58,26 @@ public class AntiFraudService {
                 .orElseGet(() -> regionRepository.save(Region.builder().regionType(regionType).build()));
 
         // amount validation
-        final var amountValidation = limitService.validate(transactionEntryRequest.getAmount());
+        final var cardLimits = limitService.getCardLimits(transactionEntryRequest.getNumber());
+        final var amountValidation = limitService.validateLimits(transactionEntryRequest.getAmount(), cardLimits);
         if (!amountValidation.equals(TransactionValidationResult.ALLOWED)) {
             validationResult.put("amount", amountValidation);
         }
 
-        // IP validation
+        // blocked IP validation
         if (suspiciousIpRepository.findByIp(transactionEntryRequest.getIp()).isPresent()) {
             validationResult.put("ip", TransactionValidationResult.PROHIBITED);
         }
 
-        // card number
+        // stolen card number validation
         if (stolenCardRepository.findByNumber(transactionEntryRequest.getNumber()).isPresent()) {
             validationResult.put("card-number", TransactionValidationResult.PROHIBITED);
         }
 
+        // regions validation
         final var numberOfDistinctRegions = transactionRepository.countDistinctRegionsForCreditCardAndNotRegionAndWithinPeriod(
                 transactionEntryRequest.getNumber(),
                 region,
-                Date.from(localDateTime.minusHours(1).toInstant(ZoneOffset.UTC)),
-                timestamp
-        );
-
-        final var numberOfDistinctIps = transactionRepository.countDistinctIpsForCreditCardAndNotIpAndWithinPeriod(
-                transactionEntryRequest.getNumber(),
-                transactionEntryRequest.getIp(),
                 Date.from(localDateTime.minusHours(1).toInstant(ZoneOffset.UTC)),
                 timestamp
         );
@@ -91,18 +88,29 @@ public class AntiFraudService {
             validationResult.put("region-correlation", TransactionValidationResult.PROHIBITED);
         }
 
+        // IP-correlation validation
+        final var numberOfDistinctIps = transactionRepository.countDistinctIpsForCreditCardAndNotIpAndWithinPeriod(
+                transactionEntryRequest.getNumber(),
+                transactionEntryRequest.getIp(),
+                Date.from(localDateTime.minusHours(1).toInstant(ZoneOffset.UTC)),
+                timestamp
+        );
+
         if (numberOfDistinctIps == 2) {
             validationResult.put("ip-correlation", TransactionValidationResult.MANUAL_PROCESSING);
         } else if (numberOfDistinctIps > 2) {
             validationResult.put("ip-correlation", TransactionValidationResult.PROHIBITED);
         }
 
+        // print validation result
         log.info("validationResult = {}", validationResult);
 
+        // create transaction and save it
         final var transaction = Transaction.builder()
                 .amount(transactionEntryRequest.getAmount())
                 .ip(transactionEntryRequest.getIp())
                 .number(transactionEntryRequest.getNumber())
+                .limits(cardLimits)
                 .region(region)
                 .date(timestamp)
                 .owner(SecurityContextHolder.getContext().getAuthentication().getName())
@@ -163,16 +171,14 @@ public class AntiFraudService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Feedback for transaction id " + transactionFeedbackRequest.getId() + " already exists.");
         }
 
-        // create feedback and persist it
-        final var feedback = Feedback.builder().validationResult(validationFeedback).build();
-        transaction.addFeedback(feedback);
+        // create feedback
+        transaction.addFeedback(Feedback.builder().validationResult(validationFeedback).build());
 
+        // update limits
+        limitService.updateLimits(transaction);
+
+        // persist transaction updates
         final var savedTransaction = transactionRepository.save(transaction);
-
-        // update limits, do it after DB writes, since we can rollback those, but we cannot rollback the system changes so easily, if the DB fails
-        limitService.updateLimits(savedTransaction);
-
-        final var dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
         return AntifraudActionResponse.builder()
                 .transactionId(savedTransaction.getId())
@@ -180,7 +186,7 @@ public class AntiFraudService {
                 .ip(savedTransaction.getIp())
                 .number(savedTransaction.getNumber())
                 .region(savedTransaction.getRegion().getRegionType().name())
-                .date(dateFormat.format(savedTransaction.getDate()))
+                .date(DATE_FORMAT.format(savedTransaction.getDate()))
                 .result(savedTransaction.getValidationResult().getName())
                 .feedback(savedTransaction.getFeedback().getValidationResult().getName())
                 .build();
@@ -189,8 +195,6 @@ public class AntiFraudService {
     @Transactional
     public List<AntifraudActionResponse> getTransactionHistory() {
 
-        final var dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-
         return transactionRepository.findAll(Sort.by("id").ascending()).stream()
                 .map(transaction -> AntifraudActionResponse.builder()
                         .transactionId(transaction.getId())
@@ -198,7 +202,7 @@ public class AntiFraudService {
                         .ip(transaction.getIp())
                         .number(transaction.getNumber())
                         .region(transaction.getRegion().getRegionType().name())
-                        .date(dateFormat.format(transaction.getDate()))
+                        .date(DATE_FORMAT.format(transaction.getDate()))
                         .result(transaction.getValidationResult().getName())
                         .feedback(transaction.getFeedback() == null ? "" : transaction.getFeedback().getValidationResult().getName())
                         .build())
