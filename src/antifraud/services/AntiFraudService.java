@@ -9,6 +9,7 @@ import antifraud.repository.RegionRepository;
 import antifraud.repository.StolenCardRepository;
 import antifraud.repository.SuspiciousIpRepository;
 import antifraud.repository.TransactionRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.TreeMap;
 
 @Service
+@RequiredArgsConstructor
 @Log4j2
 public class AntiFraudService {
 
@@ -34,20 +36,6 @@ public class AntiFraudService {
     private final StolenCardRepository stolenCardRepository;
     private final RegionRepository regionRepository;
     private final LimitService limitService;
-
-    @Autowired
-    AntiFraudService(
-            TransactionRepository transactionRepository,
-            SuspiciousIpRepository suspiciousIpRepository,
-            StolenCardRepository stolenCardRepository,
-            RegionRepository regionRepository,
-            LimitService limitService) {
-        this.transactionRepository = transactionRepository;
-        this.suspiciousIpRepository = suspiciousIpRepository;
-        this.stolenCardRepository = stolenCardRepository;
-        this.regionRepository = regionRepository;
-        this.limitService = limitService;
-    }
 
     @Transactional
     public void enterTransaction(TransactionEntryRequest transactionEntryRequest, TreeMap<String, TransactionValidationResult> validationResult) {

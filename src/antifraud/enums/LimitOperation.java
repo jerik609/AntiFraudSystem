@@ -1,0 +1,7 @@
+package antifraud.enums;
+
+public enum LimitOperation {
+    EXCEPTION,
+    DECREASE_ALLOWED, DECREASE_MANUAL, DECREASE_BOTH,
+    INCREASE_ALLOWED, INCREASE_MANUAL, INCREASE_BOTH
+}
