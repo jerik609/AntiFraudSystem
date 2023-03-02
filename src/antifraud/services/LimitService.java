@@ -92,8 +92,8 @@ public class LimitService {
         }
     }
 
-    private double modLimit(double limit, double amount, int sign) {
-        return ceil(0.8 * limitMaxAllowedAutomatedAmount + 0.2 * amount);
+    private static double modLimit(double limit, double amount, double sign) {
+        return ceil(0.8 * limit + sign * 0.2 * amount);
     }
 
     synchronized void updateLimits(Transaction transaction) {
@@ -114,24 +114,24 @@ public class LimitService {
                 case EXCEPTION:
                     throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Cannot update limits");
                 case INCREASE_ALLOWED:
-                    limitMaxAllowedAutomatedAmount = modLimit(limitMaxAllowedAutomatedAmount, transaction.getAmount(), 1);
+                    limitMaxAllowedAutomatedAmount = modLimit(limitMaxAllowedAutomatedAmount, transaction.getAmount(), 1.0);
                     break;
                 case INCREASE_MANUAL:
-                    limitMaxAllowedManualAmount = modLimit(limitMaxAllowedManualAmount, transaction.getAmount(), 1);
+                    limitMaxAllowedManualAmount = modLimit(limitMaxAllowedManualAmount, transaction.getAmount(), 1.0);
                     break;
                 case INCREASE_BOTH:
-                    limitMaxAllowedAutomatedAmount = modLimit(limitMaxAllowedAutomatedAmount, transaction.getAmount(), 1);
-                    limitMaxAllowedManualAmount = modLimit(limitMaxAllowedManualAmount, transaction.getAmount(), 1);
+                    limitMaxAllowedAutomatedAmount = modLimit(limitMaxAllowedAutomatedAmount, transaction.getAmount(), 1.0);
+                    limitMaxAllowedManualAmount = modLimit(limitMaxAllowedManualAmount, transaction.getAmount(), 1.0);
                     break;
                 case DECREASE_ALLOWED:
-                    limitMaxAllowedAutomatedAmount = modLimit(limitMaxAllowedAutomatedAmount, transaction.getAmount(), -1);
+                    limitMaxAllowedAutomatedAmount = modLimit(limitMaxAllowedAutomatedAmount, transaction.getAmount(), -1.0);
                     break;
                 case DECREASE_MANUAL:
-                    limitMaxAllowedManualAmount = modLimit(limitMaxAllowedManualAmount, transaction.getAmount(), -1);
+                    limitMaxAllowedManualAmount = modLimit(limitMaxAllowedManualAmount, transaction.getAmount(), -1.0);
                     break;
                 case DECREASE_BOTH:
-                    limitMaxAllowedAutomatedAmount = modLimit(limitMaxAllowedAutomatedAmount, transaction.getAmount(), -1);
-                    limitMaxAllowedManualAmount = modLimit(limitMaxAllowedManualAmount, transaction.getAmount(), -1);
+                    limitMaxAllowedAutomatedAmount = modLimit(limitMaxAllowedAutomatedAmount, transaction.getAmount(), -1.0);
+                    limitMaxAllowedManualAmount = modLimit(limitMaxAllowedManualAmount, transaction.getAmount(), -1.0);
                     break;
             }
 
