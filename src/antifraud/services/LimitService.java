@@ -95,11 +95,12 @@ public class LimitService {
                         "Limits configuration missing for " + transaction.getValidationResult().getName() + ", " + transaction.getFeedback().getValidationResult().getName()));
 
         log.info("Updating limits for " +
-                "Validity:" + limitConfig.getValidity().getName() + ", " +
+                "CardNumber: " + transaction.getNumber() + ", " +
+                "Validity: " + limitConfig.getValidity().getName() + ", " +
                 "Feedback: " + limitConfig.getFeedback().getName() + ", " +
                 "Operation: " + limitConfig.getOperation().name());
 
-        log.info("Previous limits: Automated: " + transaction.getLimits().getLimitAllowed() + ", Manual: " + transaction.getLimits().getLimitManual());
+        log.info("Previous limits (" + transaction.getNumber() + "): Automated: " + transaction.getLimits().getLimitAllowed() + ", Manual: " + transaction.getLimits().getLimitManual());
 
         switch (limitConfig.getOperation()) {
             case EXCEPTION:
@@ -125,7 +126,7 @@ public class LimitService {
                 transaction.getLimits().setLimitManual(modLimit(transaction.getLimits().getLimitManual(), transaction.getAmount(), -1.0));
                 break;
         }
-        log.info("Updated limits: Automated: " + transaction.getLimits().getLimitAllowed() + ", Manual: " + transaction.getLimits().getLimitManual());
+        log.info("Updated limits (" + transaction.getNumber() + "): Automated: " + transaction.getLimits().getLimitAllowed() + ", Manual: " + transaction.getLimits().getLimitManual());
     }
 
     private static double modLimit(double limit, double amount, double sign) {
