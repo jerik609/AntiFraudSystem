@@ -18,6 +18,7 @@ public class Transaction {
     @SequenceGenerator(
             name = "transaction_sequence",
             sequenceName = "transaction_sequence",
+            initialValue = 0,
             allocationSize = 1
     )
     @GeneratedValue(
@@ -65,4 +66,14 @@ public class Transaction {
         feedback.setTransaction(this);
     }
 
+    @ManyToOne(
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE},
+            optional = false
+    )
+    @JoinColumn(
+            name = "card_limits_id",
+            referencedColumnName = "id",
+            nullable = false
+    )
+    private CardLimits limits;
 }

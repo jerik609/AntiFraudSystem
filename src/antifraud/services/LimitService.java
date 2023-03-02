@@ -79,6 +79,9 @@ public class LimitService {
 
     synchronized public TransactionValidationResult validate(long amount) {
         lock.readLock().lock();
+
+
+
         try {
             if (limitMaxAllowedAutomatedAmount >= amount) {
                 return TransactionValidationResult.ALLOWED;

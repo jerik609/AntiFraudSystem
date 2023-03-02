@@ -11,12 +11,12 @@ import lombok.RequiredArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AntifraudActionResponse {
 
-    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private final Long id;
-    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private final Long transactionId;
     private final String ip;
-    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private final Long amount;
     private final String number;
     private final String result;
