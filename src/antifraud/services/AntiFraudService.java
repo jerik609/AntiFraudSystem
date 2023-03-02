@@ -21,7 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 import javax.transaction.Transactional;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
@@ -52,7 +52,7 @@ public class AntiFraudService {
         }
 
         final var localDateTime = LocalDateTime.parse(transactionEntryRequest.getDate(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-        final var timestamp = Date.from(localDateTime.toInstant(ZoneOffset.UTC));
+        final var timestamp = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
 
         final var region = regionRepository.findByRegionType(regionType)
                 .orElseGet(() -> regionRepository.save(Region.builder().regionType(regionType).build()));
@@ -78,7 +78,7 @@ public class AntiFraudService {
         final var numberOfDistinctRegions = transactionRepository.countDistinctRegionsForCreditCardAndNotRegionAndWithinPeriod(
                 transactionEntryRequest.getNumber(),
                 region,
-                Date.from(localDateTime.minusHours(1).toInstant(ZoneOffset.UTC)),
+                Date.from(localDateTime.minusHours(1).atZone(ZoneId.systemDefault()).toInstant()),
                 timestamp
         );
 
@@ -92,7 +92,7 @@ public class AntiFraudService {
         final var numberOfDistinctIps = transactionRepository.countDistinctIpsForCreditCardAndNotIpAndWithinPeriod(
                 transactionEntryRequest.getNumber(),
                 transactionEntryRequest.getIp(),
-                Date.from(localDateTime.minusHours(1).toInstant(ZoneOffset.UTC)),
+                Date.from(localDateTime.minusHours(1).atZone(ZoneId.systemDefault()).toInstant()),
                 timestamp
         );
 
