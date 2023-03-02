@@ -26,6 +26,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -183,5 +184,43 @@ public class AntiFraudService {
                 .result(savedTransaction.getValidationResult().getName())
                 .feedback(savedTransaction.getFeedback().getValidationResult().getName())
                 .build();
+    }
+
+    @Transactional
+    public List<AntifraudActionResponse> getTransactionHistory() {
+
+        final var dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+
+        return transactionRepository.findAll(Sort.by("id").ascending()).stream()
+                .map(transaction -> AntifraudActionResponse.builder()
+                        .transactionId(transaction.getId())
+                        .amount(transaction.getAmount())
+                        .ip(transaction.getIp())
+                        .number(transaction.getNumber())
+                        .region(transaction.getRegion().getRegionType().name())
+                        .date(dateFormat.format(transaction.getDate()))
+                        .result(transaction.getValidationResult().getName())
+                        .feedback(transaction.getFeedback() == null ? "" : transaction.getFeedback().getValidationResult().getName())
+                        .build())
+                .collect(Collectors.toUnmodifiableList());
+    }
+
+    @Transactional
+    public List<AntifraudActionResponse> getTransactionHistoryByCardNumber(String number) {
+
+        final var dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+
+        return transactionRepository.findByNumberOrderByIdAsc(number).stream()
+                .map(transaction -> AntifraudActionResponse.builder()
+                        .transactionId(transaction.getId())
+                        .amount(transaction.getAmount())
+                        .ip(transaction.getIp())
+                        .number(transaction.getNumber())
+                        .region(transaction.getRegion().getRegionType().name())
+                        .date(dateFormat.format(transaction.getDate()))
+                        .result(transaction.getValidationResult().getName())
+                        .feedback(transaction.getFeedback() == null ? "" : transaction.getFeedback().getValidationResult().getName())
+                        .build())
+                .collect(Collectors.toUnmodifiableList());
     }
 }

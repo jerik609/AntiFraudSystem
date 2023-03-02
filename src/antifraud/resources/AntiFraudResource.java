@@ -44,6 +44,7 @@ public class AntiFraudResource {
             return new ResponseEntity<>(AntifraudActionResponse.builder()
                     .result(TransactionValidationResult.ALLOWED.getName())
                     .info("none")
+                    .feedback(null)
                     .build(),
                     HttpStatus.OK);
         } else {
@@ -54,6 +55,7 @@ public class AntiFraudResource {
                             .filter(entry -> entry.getValue().equals(lastResult))
                             .map(Map.Entry::getKey)
                             .collect(Collectors.joining(", ")))
+                    .feedback(null)
                     .build(),
                     HttpStatus.OK);
         }
@@ -64,6 +66,27 @@ public class AntiFraudResource {
         final var antifraudActionResponse = service.applyTransactionFeedback(transactionFeedbackRequest);
         return new ResponseEntity<>(antifraudActionResponse,
                 HttpStatus.OK);
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<List<AntifraudActionResponse>> getTransactionHistory() {
+        return new ResponseEntity<>(service.getTransactionHistory(), HttpStatus.OK);
+    }
+
+    @GetMapping("/history/{number}")
+    public ResponseEntity<List<AntifraudActionResponse>> getTransactionHistoryByCardNumber(@PathVariable String number) {
+
+        if (!luhnCheckValidator.isValid(number, null)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid credit card number");
+        }
+
+        final var transactions = service.getTransactionHistoryByCardNumber(number);
+
+        if (transactions.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no transactions for credit card: " + number);
+        }
+
+        return new ResponseEntity<>(transactions, HttpStatus.OK);
     }
 
     @PostMapping("/suspicious-ip")
@@ -81,6 +104,7 @@ public class AntiFraudResource {
         return new ResponseEntity<>(AntifraudActionResponse.builder()
                 .id(enteredSuspiciousIp.getId())
                 .ip(enteredSuspiciousIp.getIp())
+                .feedback(null)
                 .build(),
                 HttpStatus.OK);
     }
@@ -96,6 +120,7 @@ public class AntiFraudResource {
 
         return new ResponseEntity<>(AntifraudActionResponse.builder()
                 .status("IP " + ip + " successfully removed!")
+                .feedback(null)
                 .build(),
                 HttpStatus.OK);
     }
@@ -129,6 +154,7 @@ public class AntiFraudResource {
         return new ResponseEntity<>(AntifraudActionResponse.builder()
                 .id(enteredStolenCard.getId())
                 .number(enteredStolenCard.getNumber())
+                .feedback(null)
                 .build(),
                 HttpStatus.OK);
     }
@@ -144,6 +170,7 @@ public class AntiFraudResource {
 
         return new ResponseEntity<>(AntifraudActionResponse.builder()
                 .status("Card " + number + " successfully removed!")
+                .feedback(null)
                 .build(),
                 HttpStatus.OK);
     }

@@ -42,7 +42,7 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .mvcMatchers(HttpMethod.POST, "/api/antifraud/transaction").hasAnyRole(RoleType.MERCHANT.name())
                 .mvcMatchers(HttpMethod.PUT, "/api/antifraud/transaction").hasAnyRole(RoleType.SUPPORT.name())
 
-                .mvcMatchers(HttpMethod.GET, "/api/antifraud/history").hasAnyRole(RoleType.SUPPORT.name())
+                .mvcMatchers(HttpMethod.GET, "/api/antifraud/history/**").hasAnyRole(RoleType.SUPPORT.name())
 
                 // master data API
                 .mvcMatchers(HttpMethod.POST, "/api/antifraud/suspicious-ip").hasAnyRole(RoleType.SUPPORT.name())
